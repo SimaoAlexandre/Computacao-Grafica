@@ -6,12 +6,15 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
 
-def draw_cylinder(color):
+def draw_cylinder(radius, height, color):
     glColor3f(*color)
-    glutSolidCylinder(1.0, 0.5, 24, 8)
+    glutSolidCylinder(radius, height, 24, 8)
 
-def geo_roda():
-    draw_cylinder((0.8, 0.8, 0.8)) 
+def geo_roda_traseira():
+    draw_cylinder(1.2, 0.6, (0.05, 0.05, 0.05))
+
+def geo_roda_dianteira():
+    draw_cylinder(0.9, 0.5, (0.05, 0.05, 0.05))
 
 def draw_corpo(color):
     glColor3f(*color)  
@@ -112,15 +115,15 @@ def build_scene():
     global CARRO
     CARRO = carro
 
-    # Rodas
-    roda1 = Node("R1",geom=geo_roda,
+    # As rodas com x = -5.0 são consideradas traseiras, que são maiores às dianteiras
+    roda1 = Node("R1", geom=geo_roda_traseira,
                 transform=tf_obj(-5.0, 0.0, -5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     
-    roda2 = Node("R2", geom=geo_roda,
+    roda2 = Node("R2", geom=geo_roda_traseira,
                 transform=tf_obj(-5.0, 0.0, 5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
-    roda3 = Node("R3", geom=geo_roda,
+    roda3 = Node("R3", geom=geo_roda_dianteira,
                 transform=tf_obj( 5.0, 0.0, 5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
-    roda4 = Node("R4", geom=geo_roda, 
+    roda4 = Node("R4", geom=geo_roda_dianteira, 
                 transform=tf_obj( 5.0, 0.0, -5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
 
     # Corpo
