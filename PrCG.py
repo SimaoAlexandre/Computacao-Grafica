@@ -176,6 +176,12 @@ WIN_W, WIN_H = 800, 600
 last_time = 0.0
 SCENE = None
 CARRO = None
+# Camera control (user-controllable)
+camera_distance = 35.0
+camera_angle_h = 45.0
+camera_angle_v = 20.0
+camera_height = 15.0
+min_camera_height = 1.0
 
 def init_gl():
     glEnable(GL_DEPTH_TEST)
@@ -212,7 +218,13 @@ def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     glLoadIdentity()
-    gluLookAt(25.0, 15.0, 20.0,  0.0, 0.0, 0.0,  0.0, 1.0, 0.0)
+    # "A posição da cãmara deverá poder ser controlada pelo utilizador"
+    cam_x = camera_distance * math.cos(math.radians(camera_angle_v)) * math.sin(math.radians(camera_angle_h))
+    cam_y = camera_height + camera_distance * math.sin(math.radians(camera_angle_v))
+    if cam_y < min_camera_height:
+        cam_y = min_camera_height
+    cam_z = camera_distance * math.cos(math.radians(camera_angle_v)) * math.cos(math.radians(camera_angle_h))
+    gluLookAt(cam_x, cam_y, cam_z,  0.0, 0.0, 0.0,  0.0, 1.0, 0.0)
 
     SCENE.draw()
     glutSwapBuffers()
@@ -264,6 +276,24 @@ def keyboard(key, x, y):
         carro.state["vel"] = 0.0   # parar
 
 
+def special_keys(key, x, y):
+    """Função para controlar a camera conforme o enunciado, pelo utilizador)."""
+    global camera_angle_h, camera_angle_v, camera_distance, camera_height
+    if key == GLUT_KEY_LEFT:
+        camera_angle_h -= 5.0
+    elif key == GLUT_KEY_RIGHT:
+        camera_angle_h += 5.0
+    elif key == GLUT_KEY_UP:
+        camera_angle_v = min(80.0, camera_angle_v + 5.0)
+    elif key == GLUT_KEY_DOWN:
+        camera_angle_v = max(-80.0, camera_angle_v - 5.0)
+    elif key == GLUT_KEY_PAGE_UP:
+        camera_distance = max(5.0, camera_distance - 2.0)
+    elif key == GLUT_KEY_PAGE_DOWN:
+        camera_distance = min(200.0, camera_distance + 2.0)
+    glutPostRedisplay()
+
+
 # -------------------------------
 # Main
 # -------------------------------
@@ -281,6 +311,7 @@ def main():
     glutReshapeFunc(reshape)
     glutIdleFunc(idle)
     glutKeyboardFunc(keyboard)
+    glutSpecialFunc(special_keys)
     glutMainLoop()
 
 
