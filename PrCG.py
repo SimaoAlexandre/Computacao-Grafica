@@ -115,16 +115,17 @@ def build_scene():
     global CARRO
     CARRO = carro
 
-    # As rodas com x = -5.0 são consideradas traseiras, que são maiores às dianteiras
-    roda1 = Node("R1", geom=geo_roda_traseira,
-                transform=tf_obj(-5.0, 0.0, -5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+    # As rodas com x = 5.0 são consideradas traseiras, que são maiores às dianteiras
+    roda1 = Node("R1_Dianteira", geom=geo_roda_dianteira,
+                transform=tf_obj(-5.0, 0.9, -6.5, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     
-    roda2 = Node("R2", geom=geo_roda_traseira,
-                transform=tf_obj(-5.0, 0.0, 5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
-    roda3 = Node("R3", geom=geo_roda_dianteira,
-                transform=tf_obj( 5.0, 0.0, 5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
-    roda4 = Node("R4", geom=geo_roda_dianteira, 
-                transform=tf_obj( 5.0, 0.0, -5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+    roda2 = Node("R2_Dianteira", geom=geo_roda_dianteira,
+                transform=tf_obj(-5.0, 0.9, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+    
+    roda3 = Node("R3_Traseira", geom=geo_roda_traseira,
+                transform=tf_obj( 5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+    roda4 = Node("R4_Traseira", geom=geo_roda_traseira, 
+                transform=tf_obj( 5.0, 1.2, -6.6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
 
     # Corpo
     corpo = Node("Corpo", geom=geo_corpo, 
