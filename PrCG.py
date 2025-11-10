@@ -27,6 +27,11 @@ def geo_parede():
     glColor3f(0.8, 0.8, 0.9) 
     glutSolidCube(1.0)
 
+def geo_portao():
+    glColor3f(0.6, 0.4, 0.2)
+    glScalef(0.5, 10.0, 20.0)
+    glutSolidCube(1.0)
+    
 def draw_chao():
     S = 100.0
     T = 50.0
@@ -91,10 +96,37 @@ def tf_obj(x, y, z, sx, sy, sz, ang_deg, ax, ay, az):
 def tf_pos_carro(node):
     glTranslatef(node.state["x"], 0.0, node.state["z"])
 
+# mudar o angulo do portão da garagem
+def tf_portao_garagem(node):
+    ang = node.state.get("ang_portao", 0.0)
+    glTranslatef(-10.0, 9.0, 0.0)
+    glRotatef(-ang, 0.0, 0.0, 1.0)
+    glTranslatef(0.0, -5.0, 0.0)
+
 # update no eixo X
 def update_carro(node, dt):
     # integrate velocity
-    node.state["x"] += node.state.get("vel", 0.0) * dt
+    vel = node.state.get("vel", 0.0)
+    nova_posicao = node.state["x"] + vel * dt
+
+    ang_portao = PORTAO_GARAGEM.state.get("ang_portao", 0.0)
+    frente_carro = nova_posicao - 6.0
+    traseira_carro = nova_posicao + 6.0
+
+    # Bloqueia entrada
+    if ang_portao == 0.0 and frente_carro <= -10.0 and vel < 0:
+        node.state["x"] = -4.0 #meti isto para o carro nao ficar no meio do portao
+        node.state["vel"] = 0.0
+        return
+
+    # Bloqueia saída
+    if ang_portao == 0.0 and traseira_carro >= -10.0 and vel > 0:
+        node.state["x"] = -16.0 #meti isto para o carro nao ficar no meio do portao
+        node.state["vel"] = 0.0
+        return
+
+    # Atualizar posição
+    node.state["x"] = nova_posicao
 
     # clamp left boundary so the car can't pass x = -30.0
     if node.state["x"] <= -20.0:
@@ -147,6 +179,13 @@ def build_scene():
     teto = Node("Teto", geom=geo_parede,
                 transform=tf_obj(-20.0, 10.0, 0.0, 20.0, 20.0, 1.0, 90.0, 1.0, 0.0, 0.0))
     
+    # Portão da garagem
+    portao = Node("Portao", geom=geo_portao, transform=tf_portao_garagem,
+                  state={"ang_portao": 0.0})
+    
+    global PORTAO_GARAGEM
+    PORTAO_GARAGEM = portao
+    
     
     world.add(
 
@@ -163,7 +202,8 @@ def build_scene():
             parede1,
             parede2,
             parede3,
-            teto
+            teto,
+            portao
         )
     )
 
@@ -177,6 +217,7 @@ WIN_W, WIN_H = 800, 600
 last_time = 0.0
 SCENE = None
 CARRO = None
+PORTAO_GARAGEM = None
 # Camera control (user-controllable)
 camera_distance = 35.0
 camera_angle_h = 45.0
@@ -266,15 +307,18 @@ def keyboard(key, x, y):
 
     print("carro.x =", carro.state.get("x"), "vel =", carro.state.get("vel"))
 
-    if key == b's':
+    if key == b's' or key == b'S':
         carro.state["vel"] = 5.0   # mover para +X
-    elif key == b'w':
+    elif key == b'w' or key == b'W':
         if carro.state.get("x", 0.0) > -20.0:
             carro.state["vel"] = -5.0  # mover para -X
         else:
             carro.state["vel"] = 0.0
     elif key == b' ':
         carro.state["vel"] = 0.0   # parar
+    elif key == b'g' or key == b'G':  # Abrir/fechar portão da garagem
+        if PORTAO_GARAGEM:
+            PORTAO_GARAGEM.state["ang_portao"] = 90.0 if PORTAO_GARAGEM.state["ang_portao"] == 0.0 else 0.0
 
 
 def special_keys(key, x, y):
