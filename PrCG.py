@@ -31,6 +31,22 @@ def geo_portao():
     glColor3f(0.6, 0.4, 0.2)
     glScalef(0.5, 10.0, 20.0)
     glutSolidCube(1.0)
+
+def geo_parachoque():
+    glColor3f(0.3, 0.3, 0.3)
+    glutSolidCube(1.0)
+
+def geo_parede_traseira():
+    glColor3f(0.8, 0.1, 0.1)
+    glutSolidCube(1.0)
+
+def geo_parede_lateral():
+    glColor3f(0.8, 0.1, 0.1)
+    glutSolidCube(1.0)
+
+def geo_porta():
+    glColor3f(0.7, 0.05, 0.05)
+    glutSolidCube(1.0)
     
 def draw_chao():
     S = 100.0
@@ -103,6 +119,18 @@ def tf_portao_garagem(node):
     glRotatef(-ang, 0.0, 0.0, 1.0)
     glTranslatef(0.0, -5.0, 0.0)
 
+def tf_porta_esquerda(node):
+    ang = node.state.get("ang_porta", 0.0)
+    glTranslatef(-2.0, 3.5, 6.0)
+    glRotatef(ang, 0.0, -1.0, 0.0)
+    glTranslatef(2.0, 0.0, 0.0)
+
+def tf_porta_direita(node):
+    ang = node.state.get("ang_porta", 0.0)
+    glTranslatef(-2.0, 3.5, -6.0)
+    glRotatef(-ang, 0.0, -1.0, 0.0)
+    glTranslatef(2.0, 0.0, 0.0)
+
 # update no eixo X
 def update_carro(node, dt):
     # integrate velocity
@@ -114,14 +142,14 @@ def update_carro(node, dt):
     traseira_carro = nova_posicao + 6.0
 
     # Bloqueia entrada
-    if ang_portao == 0.0 and frente_carro <= -10.0 and vel < 0:
-        node.state["x"] = -4.0 #meti isto para o carro nao ficar no meio do portao
+    if ang_portao == 0.0 and frente_carro <= -8.0:
+        #node.state["x"] = -3.0 #meti isto para o carro nao ficar no meio do portao
         node.state["vel"] = 0.0
         return
 
     # Bloqueia saída
-    if ang_portao == 0.0 and traseira_carro >= -10.0 and vel > 0:
-        node.state["x"] = -16.0 #meti isto para o carro nao ficar no meio do portao
+    if ang_portao == 0.0 and traseira_carro >= -10.0:
+        #node.state["x"] = -17.0 #meti isto para o carro nao ficar no meio do portao
         node.state["vel"] = 0.0
         return
 
@@ -162,6 +190,40 @@ def build_scene():
     # Corpo
     corpo = Node("Corpo", geom=geo_corpo, 
                 transform=tf_obj(0.0, 2.0, 0.0, 6.0, 1.0, 6.0, 0.0, 0.0, 0.0, 0.0))
+    
+    parachoque = Node("Parachoque", geom=geo_parachoque,
+                     transform=tf_obj(-6.0, 3.0, 0.0, 0.5, 2.0, 12.0, 0.0, 0.0, 0.0, 0.0))
+    
+    parede_traseira = Node("ParedeTraseira", geom=geo_parede_traseira,
+                          transform=tf_obj(6.0, 3.5, 0.0, 0.5, 3.0, 12.0, 0.0, 0.0, 0.0, 0.0))
+    
+    parede_lat_esq_diant = Node("ParedeLateralEsqDiant", geom=geo_parede_lateral,
+                                transform=tf_obj(-4.0, 3.0, 6.0, 4.0, 3.0, 0.3, 0.0, 0.0, 0.0, 0.0))
+    
+    porta_esquerda = Node("PortaEsquerda", geom=geo_porta, transform=tf_porta_esquerda,
+                         state={"ang_porta": 0.0})
+    porta_esq_geom = Node("PortaEsqGeom", geom=geo_porta,
+                         transform=tf_obj(0.0, 0.0, 0.0, 4.0, 3.0, 0.3, 0.0, 0.0, 0.0, 0.0))
+    porta_esquerda.add(porta_esq_geom)
+    
+    parede_lat_esq_tras = Node("ParedeLateralEsqTras", geom=geo_parede_lateral,
+                               transform=tf_obj(4.0, 3.5, 6.0, 4.0, 3.0, 0.3, 0.0, 0.0, 0.0, 0.0))
+    
+    parede_lat_dir_diant = Node("ParedeLateralDirDiant", geom=geo_parede_lateral,
+                                transform=tf_obj(-4.0, 3.0, -6.0, 4.0, 3.0, 0.3, 0.0, 0.0, 0.0, 0.0))
+    
+    porta_direita = Node("PortaDireita", geom=geo_porta, transform=tf_porta_direita,
+                        state={"ang_porta": 0.0})
+    porta_dir_geom = Node("PortaDirGeom", geom=geo_porta,
+                         transform=tf_obj(0.0, 0.0, 0.0, 4.0, 3.0, 0.3, 0.0, 0.0, 0.0, 0.0))
+    porta_direita.add(porta_dir_geom) 
+    
+    parede_lat_dir_tras = Node("ParedeLateralDirTras", geom=geo_parede_lateral,
+                               transform=tf_obj(4.0, 3.5, -6.0, 4.0, 3.0, 0.3, 0.0, 0.0, 0.0, 0.0))
+    
+    global PORTA_ESQUERDA, PORTA_DIREITA
+    PORTA_ESQUERDA = porta_esquerda
+    PORTA_DIREITA = porta_direita
 
     # Chão
     chao = Node("Chão", geom=draw_chao, 
@@ -195,7 +257,15 @@ def build_scene():
             roda2, 
             roda3, 
             roda4,
-            corpo
+            corpo,
+            parachoque,
+            parede_traseira,
+            parede_lat_esq_diant,
+            porta_esquerda,
+            parede_lat_esq_tras,
+            parede_lat_dir_diant,
+            porta_direita,
+            parede_lat_dir_tras
         ),
         chao,
         garagem.add(
@@ -218,6 +288,8 @@ last_time = 0.0
 SCENE = None
 CARRO = None
 PORTAO_GARAGEM = None
+PORTA_ESQUERDA = None
+PORTA_DIREITA = None
 # Camera control (user-controllable)
 camera_distance = 35.0
 camera_angle_h = 45.0
@@ -319,6 +391,21 @@ def keyboard(key, x, y):
     elif key == b'g' or key == b'G':  # Abrir/fechar portão da garagem
         if PORTAO_GARAGEM:
             PORTAO_GARAGEM.state["ang_portao"] = 90.0 if PORTAO_GARAGEM.state["ang_portao"] == 0.0 else 0.0
+        glutPostRedisplay()
+    elif key == b'e' or key == b'E':  # Abrir/fechar porta esquerda
+        if PORTA_ESQUERDA is not None:
+            if PORTA_ESQUERDA.state["ang_porta"] < 5.0:
+                PORTA_ESQUERDA.state["ang_porta"] = 60.0
+            else:
+                PORTA_ESQUERDA.state["ang_porta"] = 0.0
+        glutPostRedisplay()
+    elif key == b'd' or key == b'D':  # Abrir/fechar porta direita
+        if PORTA_DIREITA is not None:
+            if PORTA_DIREITA.state["ang_porta"] < 5.0:
+                PORTA_DIREITA.state["ang_porta"] = 60.0
+            else:
+                PORTA_DIREITA.state["ang_porta"] = 0.0
+        glutPostRedisplay()
 
 
 def special_keys(key, x, y):
