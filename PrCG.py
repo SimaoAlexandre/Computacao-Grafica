@@ -48,6 +48,17 @@ def geo_porta():
     glColor3f(0.7, 0.05, 0.05)
     glutSolidCube(1.0)
 
+def geo_volante():
+    # Aro do volante (torus)
+    glColor3f(0.1, 0.1, 0.1)  # Preto
+    glutSolidTorus(0.15, 0.8, 16, 24)
+
+    # Coluna central (cilindro pequeno)
+    glPushMatrix()
+    glColor3f(0.2, 0.2, 0.2)  # Cinza escuro
+    glutSolidCylinder(0.25, 0.3, 12, 8)
+    glPopMatrix()
+
 def draw_chao():
     S = 100.0
     T = 50.0
@@ -197,6 +208,11 @@ def build_scene():
     parachoque = Node("Parachoque", geom=geo_parachoque,
                      transform=tf_obj(-6.0, 3.0, 0.0, 0.5, 2.0, 12.0, 0.0, 0.0, 0.0, 0.0))
 
+    # Volante (posicionado na frente do carro, inclinado)
+    volante = Node("Volante", geom=geo_volante,
+                  transform=tf_obj(-4.5, 4.5, 3.0, 1.0, 1.0, 1.0, 90.0, 0.0, 1.0, 0.0),
+                  state={"ang_volante": 0.0})
+
     parede_traseira = Node("ParedeTraseira", geom=geo_parede_traseira,
                           transform=tf_obj(6.0, 3.5, 0.0, 0.5, 3.0, 12.0, 0.0, 0.0, 0.0, 0.0))
 
@@ -262,6 +278,7 @@ def build_scene():
             roda4,
             corpo,
             parachoque,
+            volante,
             parede_traseira,
             parede_lat_esq_diant,
             porta_esquerda,
