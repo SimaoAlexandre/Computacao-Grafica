@@ -325,10 +325,19 @@ def init_gl():
     glEnable(GL_NORMALIZE)
 
     glEnable(GL_LIGHTING)
+
+    # LIGHT0 - Luz principal (branca, direcional, vinda de cima)
     glEnable(GL_LIGHT0)
     glLightfv(GL_LIGHT0, GL_POSITION, (0.45, 0.9, 0.35, 0.0))
     glLightfv(GL_LIGHT0, GL_DIFFUSE,  (1.0, 1.0, 1.0, 1.0))
     glLightfv(GL_LIGHT0, GL_AMBIENT,  (0.18, 0.18, 0.22, 1.0))
+
+    # LIGHT1 - Luz secundária (laranja/quente, posicional, do lado da garagem)
+    glEnable(GL_LIGHT1)
+    glLightfv(GL_LIGHT1, GL_POSITION, (-25.0, 8.0, 0.0, 1.0))  # Posicional (w=1.0)
+    glLightfv(GL_LIGHT1, GL_DIFFUSE,  (1.0, 0.7, 0.4, 1.0))    # Cor laranja/quente
+    glLightfv(GL_LIGHT1, GL_AMBIENT,  (0.1, 0.05, 0.0, 1.0))
+    glLightfv(GL_LIGHT1, GL_SPECULAR, (0.8, 0.6, 0.3, 1.0))
 
     glEnable(GL_COLOR_MATERIAL)
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
