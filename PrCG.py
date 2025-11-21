@@ -116,7 +116,7 @@ def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
 
 def draw_chao(): #adaptado da TP06 do 2-cube-textured.py
     S = 100.0
-    T = 50.0  # Quantas vezes multiplicar a textura no chão
+    T = 20.0  # Quantas vezes multiplicar a textura no chão (menor -> tiles maiores para relva)
     
     # Ativar texturas apenas para o chão
     glEnable(GL_TEXTURE_2D)
@@ -188,7 +188,7 @@ def tf_pos_carro(node):
 def tf_portao_garagem(node):
     ang = node.state.get("ang_portao", 0.0)
     glTranslatef(-10.0, 9.0, 0.0)
-    glRotatef(-ang, 0.0, 0.0, 1.0)
+    glRotatef(ang, 0.0, 0.0, 1.0)
     glTranslatef(0.0, -5.0, 0.0)
 
 def tf_porta_esquerda(node):
@@ -201,7 +201,7 @@ def tf_porta_direita(node):
     ang = node.state.get("ang_porta", 0.0)
     glTranslatef(-2.0, 3.5, -6.0)
     glRotatef(-ang, 0.0, -1.0, 0.0)
-    glTranslatef(2.0, 0.0, 0.0)
+    glTranslatef(2.0, 0.0, 0.0) 
 
 def update_portao(node, dt):
     
@@ -432,7 +432,8 @@ def init_gl():
     # Configurar modo de textura (mas não ativar ainda)
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
     
-    tex_floor = load_texture("Mosaico.png", repeat=True)
+    # substitute floor texture by a grass tile image for testing
+    tex_floor = load_texture("Mosaico_Chao.png", repeat=True)
     tex_matricula = load_texture("Matrícula.png", repeat=False)
 
 def reshape(w, h):
