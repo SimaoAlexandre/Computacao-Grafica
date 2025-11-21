@@ -1,9 +1,10 @@
 # Projecto de Computação Gráfica
 
-import sys, math
+import sys, math, os
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
+from PIL import Image
 
 
 def draw_cylinder(radius, height, color):
@@ -63,19 +64,48 @@ def geo_volante():
     glutSolidCylinder(0.25, 0.3, 12, 8)
     glPopMatrix()
 
-def draw_chao():
+def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
+    if not os.path.isfile(path):
+        print("Texture not found:", path); sys.exit(1)
+
+    img = Image.open(path).convert("RGBA")
+    w, h = img.size
+    data = img.tobytes("raw", "RGBA", 0, -1)
+
+    tex_id = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, tex_id)
+
+    # filtros  e  mipmaps (veremos esta parte mais tarde )
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT if repeat else GL_CLAMP_TO_EDGE)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT if repeat else GL_CLAMP_TO_EDGE)
+
+    # Criação de mipmaps com o GLU
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, w, h, GL_RGBA, GL_UNSIGNED_BYTE, data)
+
+    #devolve o ID de cada textura carregada que será usado quando os objectos forem desenhados
+    return tex_id
+
+def draw_chao(): #adaptado da TP06 do 2-cube-textured.py
     S = 100.0
-    T = 50.0
-    glColor3f(0.2, 0.8, 0.2)
+    T = 50.0  # Quantas vezes multiplicar a textura no chão
+    
+    # Ativar texturas apenas para o chão
+    glEnable(GL_TEXTURE_2D)
+    glBindTexture(GL_TEXTURE_2D, tex_floor)
+    glColor3f(1, 1, 1)
     glNormal3f(0, 1, 0)
 
     glBegin(GL_QUADS)
-    glVertex3f(-S, 0.0,  S)
-    glVertex3f( S, 0.0,  S)
-    glVertex3f( S, 0.0, -S)
-    glVertex3f(-S, 0.0, -S)
+    glTexCoord2f(0.0, 0.0); glVertex3f(-S, 0.0,  S)
+    glTexCoord2f(T,   0.0); glVertex3f( S, 0.0,  S)
+    glTexCoord2f(T,    T ); glVertex3f( S, 0.0, -S)
+    glTexCoord2f(0.0,  T ); glVertex3f(-S, 0.0, -S)
     glEnd()
-
+    
+    # Desativar texturas para não afetar outros objetos
+    glDisable(GL_TEXTURE_2D)
 
 # -------------------------------
 # Classe Node
@@ -321,6 +351,7 @@ PORTAO_GARAGEM = None
 PORTA_ESQUERDA = None
 PORTA_DIREITA = None
 CAPO = None
+tex_floor = None
 # Camera control (user-controllable)
 camera_distance = 35.0
 camera_angle_h = 45.0
@@ -329,6 +360,8 @@ camera_height = 15.0
 min_camera_height = 1.0
 
 def init_gl():
+    global tex_floor
+    
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_CULL_FACE)
     glCullFace(GL_BACK)
@@ -352,7 +385,11 @@ def init_gl():
 
     glEnable(GL_COLOR_MATERIAL)
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-
+    
+    # Configurar modo de textura (mas não ativar ainda)
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
+    
+    tex_floor = load_texture("Mosaico.png", repeat=True)
 
 def reshape(w, h):
     global WIN_W, WIN_H
