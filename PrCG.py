@@ -126,6 +126,34 @@ def geo_volante():
         glutSolidCube(1.0)
         glPopMatrix()
 
+def geo_vidro():
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    
+    glDisable(GL_CULL_FACE)
+    
+    glDisable(GL_LIGHTING)
+    
+    glColor4f(0.6, 0.75, 0.85, 0.35)  # RGBA - alpha=0.35 para transparência
+    
+    glBegin(GL_QUADS)
+    glVertex3f(-0.5, -0.5, 0.0)
+    glVertex3f( 0.5, -0.5, 0.0)
+    glVertex3f( 0.5,  0.5, 0.0)
+    glVertex3f(-0.5,  0.5, 0.0)
+    glEnd()
+    
+    glBegin(GL_QUADS)
+    glVertex3f(-0.5, -0.5, 0.0)
+    glVertex3f(-0.5,  0.5, 0.0)
+    glVertex3f( 0.5,  0.5, 0.0)
+    glVertex3f( 0.5, -0.5, 0.0)
+    glEnd()
+    
+    glEnable(GL_LIGHTING)
+    glEnable(GL_CULL_FACE)
+    glDisable(GL_BLEND)
+
 def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
     if not os.path.isfile(path):
         print("Texture not found:", path); sys.exit(1)
@@ -358,6 +386,10 @@ def build_scene():
     
     matricula_frente = Node("MatriculaFrente", geom=geo_matricula,
                          transform=tf_obj(-6.3, 3.0, 0.0, 1.0, 1.0, 1.0, -90.0, 0.0, 1.0, 0.0))
+    
+    vidro_frente = Node("VidroFrente", geom=geo_vidro,
+                       transform=tf_obj(-2.0, 5.5, 0.0, 11.0, 2.0, 4.0, 90.0, 0.0, 1.0, 0.0))
+    
     global PORTA_ESQUERDA, PORTA_DIREITA, CAPO
     PORTA_ESQUERDA = porta_esquerda
     PORTA_DIREITA = porta_direita
@@ -403,7 +435,8 @@ def build_scene():
             parede_lat_dir_tras,
             capo,
             matricula_frente,
-            matricula_tras
+            matricula_tras,
+            vidro_frente
         ),
         chao,
         garagem.add(
