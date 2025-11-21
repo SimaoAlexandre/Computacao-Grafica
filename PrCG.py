@@ -127,16 +127,26 @@ def geo_volante():
         glPopMatrix()
 
 def geo_vidro():
+    # Desabilitar escrita no depth buffer para transparência bidirecional
+    glDepthMask(GL_FALSE)
+    
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     
     glDisable(GL_CULL_FACE)
     
-    glDisable(GL_LIGHTING)
+    # Manter iluminação ligada para reflexos suaves
+    # Configurar material para reflexo ligeiro
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (0.3, 0.3, 0.3, 1.0))
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0)
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (0.2, 0.2, 0.25, 1.0))
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (0.7, 0.8, 0.85, 0.15))
     
-    glColor4f(0.6, 0.75, 0.85, 0.35)  # RGBA - alpha=0.35 para transparência
+    # Vidro transparente com leve tom azulado
+    glColor4f(0.7, 0.8, 0.9, 0.15)  # RGBA - alpha=0.15 para transparência com reflexo
     
     glBegin(GL_QUADS)
+    glNormal3f(0.0, 0.0, 1.0)  # Normal para iluminação correta
     glVertex3f(-0.5, -0.5, 0.0)
     glVertex3f( 0.5, -0.5, 0.0)
     glVertex3f( 0.5,  0.5, 0.0)
@@ -144,15 +154,18 @@ def geo_vidro():
     glEnd()
     
     glBegin(GL_QUADS)
+    glNormal3f(0.0, 0.0, -1.0)  # Normal oposta para a outra face
     glVertex3f(-0.5, -0.5, 0.0)
     glVertex3f(-0.5,  0.5, 0.0)
     glVertex3f( 0.5,  0.5, 0.0)
     glVertex3f( 0.5, -0.5, 0.0)
     glEnd()
     
-    glEnable(GL_LIGHTING)
     glEnable(GL_CULL_FACE)
     glDisable(GL_BLEND)
+    
+    # Reativar escrita no depth buffer
+    glDepthMask(GL_TRUE)
 
 def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
     if not os.path.isfile(path):
@@ -264,7 +277,11 @@ def tf_porta_direita(node):
     ang = node.state.get("ang_porta", 0.0)
     glTranslatef(-2.0, 3.5, -6.0)
     glRotatef(-ang, 0.0, -1.0, 0.0)
-    glTranslatef(2.0, 0.0, 0.0) 
+    glTranslatef(2.0, 0.0, 0.0)
+
+def tf_roda(node):
+    ang = node.state.get("ang_roda", 0.0)
+    glRotatef(ang, 0.0, 0.0, 1.0) 
 
 def update_portao(node, dt):
     
@@ -283,6 +300,16 @@ def update_portao(node, dt):
     else:
         step = max(-max_step, diff)
     node.state["ang_portao"] = cur + step
+
+def update_roda(node, dt):
+
+    carro = CARRO
+    if carro:
+        vel = carro.state.get("vel", 0.0)
+        raio = 1.2
+        rot_speed = -(vel / (2.0 * math.pi * raio)) * 360.0
+        ang_atual = node.state.get("ang_roda", 0.0)
+        node.state["ang_roda"] = ang_atual + rot_speed * dt
 
 # update no eixo X
 def update_carro(node, dt):
@@ -329,16 +356,38 @@ def build_scene():
     global CARRO
     CARRO = carro
 
-    roda1 = Node("R1_Dianteira",geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
-                transform=tf_obj(-5.0, 1.2, -6.5, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+    # Nodes de posição (não têm geometria)
+    roda1_pos = Node("R1_Pos",
+                    transform=tf_obj(-5.0, 1.2, -6.5, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+    roda1 = Node("R1_Dianteira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
+                transform=tf_roda,
+                updater=update_roda,
+                state={"ang_roda": 0.0})
+    roda1_pos.add(roda1)
 
+    roda2_pos = Node("R2_Pos",
+                    transform=tf_obj(-5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     roda2 = Node("R2_Dianteira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
-                transform=tf_obj(-5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+                transform=tf_roda,
+                updater=update_roda,
+                state={"ang_roda": 0.0})
+    roda2_pos.add(roda2)
 
+    roda3_pos = Node("R3_Pos",
+                    transform=tf_obj(5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     roda3 = Node("R3_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
-                transform=tf_obj( 5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+                transform=tf_roda,
+                updater=update_roda,
+                state={"ang_roda": 0.0})
+    roda3_pos.add(roda3)
+    
+    roda4_pos = Node("R4_Pos",
+                    transform=tf_obj(5.0, 1.2, -6.6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     roda4 = Node("R4_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
-                transform=tf_obj( 5.0, 1.2, -6.6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+                transform=tf_roda,
+                updater=update_roda,
+                state={"ang_roda": 0.0})
+    roda4_pos.add(roda4)
 
     corpo = Node("Corpo", geom=geo_corpo,
                 transform=tf_obj(0.0, 2.0, 0.0, 6.0, 1.0, 6.0, 0.0, 0.0, 0.0, 0.0))
@@ -358,8 +407,10 @@ def build_scene():
 
     porta_esquerda = Node("PortaEsquerda", geom=geo_porta, transform=tf_porta_esquerda,
                          state={"ang_porta": 0.0})
+    
     porta_esq_geom = Node("PortaEsqGeom", geom=geo_porta,
                          transform=tf_obj(0.0, 0.0, 0.0, 4.0, 3.0, 0.3, 0.0, 0.0, 0.0, 0.0))
+
     porta_esquerda.add(porta_esq_geom)
 
     parede_lat_esq_tras = Node("ParedeLateralEsqTras", geom=geo_parede_lateral,
@@ -419,10 +470,10 @@ def build_scene():
     world.add(
 
         carro.add(
-            roda1,
-            roda2,
-            roda3,
-            roda4,
+            roda1_pos,
+            roda2_pos,
+            roda3_pos,
+            roda4_pos,
             corpo,
             parachoque,
             volante,
@@ -436,7 +487,7 @@ def build_scene():
             capo,
             matricula_frente,
             matricula_tras,
-            vidro_frente
+            vidro_frente  # Vidro por último para renderização correta de transparência
         ),
         chao,
         garagem.add(
@@ -482,13 +533,11 @@ def init_gl():
 
     glEnable(GL_LIGHTING)
 
-    # LIGHT0 - Luz principal (branca, direcional, vinda de cima)
     glEnable(GL_LIGHT0)
     glLightfv(GL_LIGHT0, GL_POSITION, (0.45, 0.9, 0.35, 0.0))
     glLightfv(GL_LIGHT0, GL_DIFFUSE,  (1.0, 1.0, 1.0, 1.0))
     glLightfv(GL_LIGHT0, GL_AMBIENT,  (0.18, 0.18, 0.22, 1.0))
 
-    # LIGHT1 - Luz secundária (laranja/quente, posicional, do lado da garagem)
     glEnable(GL_LIGHT1)
     glLightfv(GL_LIGHT1, GL_POSITION, (-25.0, 8.0, 0.0, 1.0))  # Posicional (w=1.0)
     glLightfv(GL_LIGHT1, GL_DIFFUSE,  (1.0, 0.7, 0.4, 1.0))    # Cor laranja/quente
@@ -498,10 +547,8 @@ def init_gl():
     glEnable(GL_COLOR_MATERIAL)
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
     
-    # Configurar modo de textura (mas não ativar ainda)
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
     
-    # substitute floor texture by a grass tile image for testing
     tex_floor = load_texture("Mosaico_Chao.png", repeat=True)
     tex_matricula = load_texture("Matrícula.png", repeat=False)
 
