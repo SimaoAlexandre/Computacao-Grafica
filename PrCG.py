@@ -718,11 +718,7 @@ def keyboard(key, x, y):
 
     print("carro.x =", carro.state.get("x"), "vel =", carro.state.get("vel"))
 
-    if key == b' ':
-        carro.state["vel"] = 0.0   # parar
-        carro.state["steering"] = 0.0  # centralizar direção
-
-    elif key == b'g' or key == b'G':  # Abrir/fechar portão da garagem (animado)
+    if key == b'g' or key == b'G':  # Abrir/fechar portão da garagem (animado)
         if PORTAO_GARAGEM and CARRO:
             # Verificar se o carro está no meio do portão
             x_carro = CARRO.state.get("x", 0.0)
@@ -733,8 +729,8 @@ def keyboard(key, x, y):
 
             # Portão está entre x = -10 e x = -8 aproximadamente
             # Bloquear se o carro está atravessando o portão
-            if frente_carro < -8.0 and traseira_carro > -10.0:
-                print("Não é possível fechar o portão: carro está no meio!")
+            if frente_carro < 6.0 and traseira_carro > -10.0:
+                print("Não é possível fechar/abrir o portão!")
             else:
                 # Alterna o alvo (target) — o updater move `ang_portao` gradualmente
                 cur_target = PORTAO_GARAGEM.state.get("target_ang", 0.0)
@@ -777,8 +773,10 @@ def process_keys():
         return
  
     dt = 0.016 # aproximadamente 60 FPS
-    max_speed = 15.0 # unidades/s
-    acceleration = 30.0 # unidades/s²
+    max_speed = 30.0 # Aumentado para 30
+    acceleration = 2.0 # unidades/s², a aceleração do carro
+    braking_force = 5.0 # Travagem suave (não para logo)
+    
     max_steering = 35.0 # graus máximos de direção
     steering_speed = 120.0 # graus/s
     return_speed = 80.0 # graus/s
@@ -789,15 +787,26 @@ def process_keys():
     # Normalizar teclas
     pressed = {k.lower() for k in keys_pressed}
 
-    # --- Velocidade (W/S) ---
-    if b"w" in pressed:
+    # --- Velocidade (W/S) e Travão (Espaço) ---
+    if b" " in pressed: # Travão de mão / Travagem forte
+        if abs(vel) > 0.1:
+            # Travar contra o movimento
+            sinal = 1 if vel > 0 else -1
+            vel -= sinal * braking_force * dt
+            # Se passar de 0, para
+            if (sinal == 1 and vel < 0) or (sinal == -1 and vel > 0):
+                vel = 0.0
+        else:
+            vel = 0.0
+            
+    elif b"w" in pressed:
         vel = min(max_speed, vel + acceleration * dt)
     elif b"s" in pressed:
         vel = max(-max_speed * 0.6, vel - acceleration * dt)
     else:
         # Fricção
         if abs(vel) > 0.1:
-            fric = 20.0 * dt
+            fric = 5.0 * dt # Fricção mais suave
             vel -= fric if vel > 0 else -fric
         else:
             vel = 0.0
