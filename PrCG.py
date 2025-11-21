@@ -87,9 +87,19 @@ def geo_volante():
 
     # Coluna central (cilindro pequeno)
     glPushMatrix()
-    glColor3f(0.2, 0.2, 0.2)  # Cinza escuro
-    glutSolidCylinder(0.25, 0.3, 12, 8)
+    glColor3f(0.3, 0.3, 0.3)
+    glutSolidSphere(0.25, 16, 16)
     glPopMatrix()
+
+    for i in range(3):     # 3 barras radiais (raios do volante)
+        glPushMatrix()
+        angle = i * 120.0  # Dividir 360 graus por 3
+        glRotatef(angle, 0.0, 0.0, 1.0)
+        glTranslatef(0.4, 0.0, 0.0)  # Mover para o raio médio
+        glScalef(0.8, 0.08, 0.1)  # Barra alongada e fina
+        glColor3f(0.15, 0.15, 0.15)
+        glutSolidCube(1.0)
+        glPopMatrix()
 
 def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
     if not os.path.isfile(path):
