@@ -396,6 +396,7 @@ CAPO = None
 tex_floor = None
 tex_matricula = None
 # Camera control (user-controllable)
+camera_mode = 0  # 0 = livre, 1 = 3ª pessoa, 2 = 1ª pessoa
 camera_distance = 35.0
 camera_angle_h = 45.0
 camera_angle_v = 20.0
@@ -454,13 +455,40 @@ def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     glLoadIdentity()
-    # "A posição da cãmara deverá poder ser controlada pelo utilizador"
-    cam_x = camera_distance * math.cos(math.radians(camera_angle_v)) * math.sin(math.radians(camera_angle_h))
-    cam_y = camera_height + camera_distance * math.sin(math.radians(camera_angle_v))
-    if cam_y < min_camera_height:
-        cam_y = min_camera_height
-    cam_z = camera_distance * math.cos(math.radians(camera_angle_v)) * math.cos(math.radians(camera_angle_h))
-    gluLookAt(cam_x, cam_y, cam_z,  0.0, 0.0, 0.0,  0.0, 1.0, 0.0)
+    
+    # Posição do carro
+    car_x = CARRO.state.get("x", 0.0) if CARRO else 0.0
+    car_y = 2.5  # Altura aproximada do centro do carro
+    car_z = CARRO.state.get("z", 0.0) if CARRO else 0.0
+    
+    if camera_mode == 0: # Modo livre
+        cam_x = camera_distance * math.cos(math.radians(camera_angle_v)) * math.sin(math.radians(camera_angle_h))
+        cam_y = camera_height + camera_distance * math.sin(math.radians(camera_angle_v))
+        if cam_y < min_camera_height:
+            cam_y = min_camera_height
+        cam_z = camera_distance * math.cos(math.radians(camera_angle_v)) * math.cos(math.radians(camera_angle_h))
+        gluLookAt(cam_x, cam_y, cam_z,  0.0, 0.0, 0.0,  0.0, 1.0, 0.0)
+    
+    elif camera_mode == 1: # Modo 3ª pessoa
+        offset_back = 15.0 
+        offset_up = 8.0 
+        
+        cam_x = car_x + offset_back
+        cam_y = car_y + offset_up
+        cam_z = car_z
+        
+        gluLookAt(cam_x, cam_y, cam_z,  car_x, car_y, car_z,  0.0, 1.0, 0.0)
+    
+    elif camera_mode == 2: # Modo 1ª pessoa
+        cam_x = car_x + 2.0 
+        cam_y = car_y + 4 
+        cam_z = car_z + 3.0
+        
+        look_x = car_x - 10.0
+        look_y = car_y + 2.5
+        look_z = car_z + 3.0
+        
+        gluLookAt(cam_x, cam_y, cam_z,  look_x, look_y, look_z,  0.0, 1.0, 0.0)
 
     SCENE.draw()
     glutSwapBuffers()
@@ -545,6 +573,13 @@ def keyboard(key, x, y):
                 PORTA_DIREITA.state["ang_porta"] = 60.0
             else:
                 PORTA_DIREITA.state["ang_porta"] = 0.0
+        glutPostRedisplay()
+    
+    elif key == b'c' or key == b'C':  # Alternar modo de câmara
+        global camera_mode
+        camera_mode = (camera_mode + 1) % 3
+        mode_names = ["Câmara Livre", "3ª Pessoa", "1ª Pessoa"]
+        print(f"Modo de câmara: {mode_names[camera_mode]}")
         glutPostRedisplay()
 
 
