@@ -17,6 +17,31 @@ def geo_roda_traseira():
 def geo_roda_dianteira():
     draw_cylinder(0.9, 0.5, (0.05, 0.05, 0.05))
 
+def geo_jante(flip=False):
+    glPushMatrix()
+    if flip:
+        glRotatef(180.0, 0.0, 1.0, 0.0)
+        glTranslatef(0.0, 0.0, -0.6)
+
+    # Aro da jante
+    glColor3f(0.7, 0.7, 0.7)
+    glutSolidTorus(0.1, 0.6, 12, 24)
+
+    # Centro
+    glColor3f(0.3, 0.3, 0.3)
+    glutSolidSphere(0.2, 16, 16)
+
+    for i in range(5):    # 5 raios
+        glPushMatrix()
+        glRotatef(i * 72.0, 0.0, 0.0, 1.0)
+        glTranslatef(0.3, 0.0, 0.0)
+        glScalef(0.6, 0.05, 0.05)
+        glColor3f(0.4, 0.4, 0.4)
+        glutSolidCube(1.0)
+        glPopMatrix()
+
+    glPopMatrix()
+
 def draw_corpo(color):
     glColor3f(*color)
     glutSolidCube(2.0)
@@ -276,15 +301,15 @@ def build_scene():
     global CARRO
     CARRO = carro
 
-    roda1 = Node("R1_Dianteira", geom=geo_roda_dianteira,
+    roda1 = Node("R1_Dianteira",geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
                 transform=tf_obj(-5.0, 0.9, -6.5, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
 
-    roda2 = Node("R2_Dianteira", geom=geo_roda_dianteira,
+    roda2 = Node("R2_Dianteira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
                 transform=tf_obj(-5.0, 0.9, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
 
-    roda3 = Node("R3_Traseira", geom=geo_roda_traseira,
+    roda3 = Node("R3_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
                 transform=tf_obj( 5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
-    roda4 = Node("R4_Traseira", geom=geo_roda_traseira,
+    roda4 = Node("R4_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
                 transform=tf_obj( 5.0, 1.2, -6.6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
 
     corpo = Node("Corpo", geom=geo_corpo,
