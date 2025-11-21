@@ -15,7 +15,7 @@ def geo_roda_traseira():
     draw_cylinder(1.2, 0.6, (0.05, 0.05, 0.05))
 
 def geo_roda_dianteira():
-    draw_cylinder(0.9, 0.5, (0.05, 0.05, 0.05))
+    draw_cylinder(1.2, 0.5, (0.05, 0.05, 0.05))
 
 def geo_jante(flip=False):
     glPushMatrix()
@@ -302,10 +302,10 @@ def build_scene():
     CARRO = carro
 
     roda1 = Node("R1_Dianteira",geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
-                transform=tf_obj(-5.0, 0.9, -6.5, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+                transform=tf_obj(-5.0, 1.2, -6.5, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
 
     roda2 = Node("R2_Dianteira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
-                transform=tf_obj(-5.0, 0.9, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+                transform=tf_obj(-5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
 
     roda3 = Node("R3_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
                 transform=tf_obj( 5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
