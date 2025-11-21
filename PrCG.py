@@ -53,6 +53,33 @@ def geo_capo():
     glColor3f(0.8, 0.1, 0.1)
     glutSolidCube(1.0)
 
+def geo_matricula(): #Inspirado na TP06 do 2-cube-textured.py
+    glEnable(GL_TEXTURE_2D)
+    glBindTexture(GL_TEXTURE_2D, tex_matricula)
+    glColor3f(1.0, 1.0, 1.0)
+    
+    w = 7.0 # largura
+    h = 1.5  # altura
+    d = 0.05  # espessura
+    
+    glBegin(GL_QUADS)
+    # Frente da matrícula (face principal com textura)
+    glNormal3f(0, 0, 1)
+    glTexCoord2f(0, 0); glVertex3f(-w/2, -h/2, d/2)
+    glTexCoord2f(1, 0); glVertex3f( w/2, -h/2, d/2)
+    glTexCoord2f(1, 1); glVertex3f( w/2,  h/2, d/2)
+    glTexCoord2f(0, 1); glVertex3f(-w/2,  h/2, d/2)
+    
+    # Trás da matrícula
+    glNormal3f(0, 0, -1)
+    glTexCoord2f(1, 0); glVertex3f(-w/2, -h/2, -d/2)
+    glTexCoord2f(0, 0); glVertex3f( w/2, -h/2, -d/2)
+    glTexCoord2f(0, 1); glVertex3f( w/2,  h/2, -d/2)
+    glTexCoord2f(1, 1); glVertex3f(-w/2,  h/2, -d/2)
+    glEnd()
+    
+    glDisable(GL_TEXTURE_2D)
+
 def geo_volante():
     # Aro do volante (torus)
     glColor3f(0.1, 0.1, 0.1)  # Preto
@@ -278,6 +305,11 @@ def build_scene():
                state={"ang_capo": 0.0},
             transform=tf_obj(-4.0, 4.25, 0.0, 4, 0.5, 12.0, 0.0, 0.0, 0.0, 0.0))
 
+    matricula_tras = Node("MatriculaTras", geom=geo_matricula,
+                           transform=tf_obj(6.3, 3.0, 0.0, 1.0, 1.0, 1.0, 90.0, 0.0, 1.0, 0.0))
+    
+    matricula_frente = Node("MatriculaFrente", geom=geo_matricula,
+                         transform=tf_obj(-6.3, 3.0, 0.0, 1.0, 1.0, 1.0, -90.0, 0.0, 1.0, 0.0))
     global PORTA_ESQUERDA, PORTA_DIREITA, CAPO
     PORTA_ESQUERDA = porta_esquerda
     PORTA_DIREITA = porta_direita
@@ -325,7 +357,9 @@ def build_scene():
             parede_lat_dir_diant,
             porta_direita,
             parede_lat_dir_tras,
-            capo
+            capo,
+            matricula_frente,
+            matricula_tras
         ),
         chao,
         garagem.add(
@@ -352,6 +386,7 @@ PORTA_ESQUERDA = None
 PORTA_DIREITA = None
 CAPO = None
 tex_floor = None
+tex_matricula = None
 # Camera control (user-controllable)
 camera_distance = 35.0
 camera_angle_h = 45.0
@@ -360,7 +395,7 @@ camera_height = 15.0
 min_camera_height = 1.0
 
 def init_gl():
-    global tex_floor
+    global tex_floor, tex_matricula
     
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_CULL_FACE)
@@ -390,6 +425,7 @@ def init_gl():
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
     
     tex_floor = load_texture("Mosaico.png", repeat=True)
+    tex_matricula = load_texture("Matrícula.png", repeat=False)
 
 def reshape(w, h):
     global WIN_W, WIN_H
