@@ -1,0 +1,18 @@
+# Controles de Interação
+
+Interaja com a cena (`PrCG.py`) usando as teclas abaixo. Pressione as teclas na janela da aplicação.
+
+- `g` / `G`: Abrir / fechar o portão da garagem (não fecha se o carro estiver no meio).
+- `e` / `E`: Abrir / fechar a porta esquerda.
+- `d` / `D`: Abrir / fechar a porta direita.
+- `s` / `S`: Mover o carro para +X (avançar).
+- `w` / `W`: Mover o carro para -X (recuar).
+- `Space`: Parar o carro.
+- `Esc`: Sair da aplicação.
+
+Teclas especiais:
+
+- `←` / `→` (setas esquerda/direita): Rodar a câmara horizontalmente.
+- `↑` / `↓` (setas cima/baixo): Ajustar o ângulo vertical da câmara.
+- `Page Up` / `Page Down`: Aproximar / afastar a câmara.
+
