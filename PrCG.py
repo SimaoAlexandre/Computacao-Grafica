@@ -203,6 +203,24 @@ def tf_porta_direita(node):
     glRotatef(-ang, 0.0, -1.0, 0.0)
     glTranslatef(2.0, 0.0, 0.0)
 
+def update_portao(node, dt):
+    
+    cur = node.state.get("ang_portao", 0.0)
+    target = node.state.get("target_ang", cur)
+
+    if abs(target - cur) < 1e-3:
+        return
+
+    speed = 20.0
+    max_step = speed * dt
+    diff = target - cur
+
+    if diff > 0:
+        step = min(max_step, diff)
+    else:
+        step = max(-max_step, diff)
+    node.state["ang_portao"] = cur + step
+
 # update no eixo X
 def update_carro(node, dt):
     # integrate velocity
@@ -243,14 +261,11 @@ def update_carro(node, dt):
 def build_scene():
     world = Node("World")
 
-    #Carro
     carro = Node("Carro", transform=tf_pos_carro, updater=update_carro,
-                 state={"x": 0.0, "z": 0.0, "vel": 0.0})
-    # store global reference so keyboard() always controls the correct node
+                 state={"x": 20.0, "z": 0.0, "vel": 0.0})
     global CARRO
     CARRO = carro
 
-    # As rodas com x = 5.0 são consideradas traseiras, que são maiores às dianteiras
     roda1 = Node("R1_Dianteira", geom=geo_roda_dianteira,
                 transform=tf_obj(-5.0, 0.9, -6.5, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
 
@@ -262,14 +277,12 @@ def build_scene():
     roda4 = Node("R4_Traseira", geom=geo_roda_traseira,
                 transform=tf_obj( 5.0, 1.2, -6.6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
 
-    # Corpo
     corpo = Node("Corpo", geom=geo_corpo,
                 transform=tf_obj(0.0, 2.0, 0.0, 6.0, 1.0, 6.0, 0.0, 0.0, 0.0, 0.0))
 
     parachoque = Node("Parachoque", geom=geo_parachoque,
                      transform=tf_obj(-6.0, 3.0, 0.0, 0.5, 2.0, 12.0, 0.0, 0.0, 0.0, 0.0))
 
-    # Volante (posicionado na frente do carro, inclinado)
     volante = Node("Volante", geom=geo_volante,
                   transform=tf_obj(-1.9, 4.5, 3.0, 1.0, 1.0, 1.0, 90.0, 0.0, 1.0, 0.0),
                   state={"ang_volante": 0.0})
@@ -315,13 +328,11 @@ def build_scene():
     PORTA_DIREITA = porta_direita
     CAPO = capo
 
-    # Chão
     chao = Node("Chão", geom=draw_chao,
                 transform=tf_obj(0.0, -1.0, 0.0, 1.1, 1.1, 1.1, 0.0, 0.0, 0.0, 0.0))
 
     garagem = Node("Garagem", geom=draw_chao)
 
-    # Garagem
     parede1 = Node("Parede", geom=geo_parede,
                 transform=tf_obj(-20.0, 5.0, -10.0, 20.0, 10.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     parede2 = Node("Parede", geom=geo_parede,
@@ -331,16 +342,14 @@ def build_scene():
     teto = Node("Teto", geom=geo_parede,
                 transform=tf_obj(-20.0, 10.0, 0.0, 20.0, 20.0, 1.0, 90.0, 1.0, 0.0, 0.0))
 
-    # Portão da garagem
     portao = Node("Portao", geom=geo_portao, transform=tf_portao_garagem,
-                  state={"ang_portao": 0.0})
+                  updater=update_portao,
+                  state={"ang_portao": 0.0, "target_ang": 0.0})
 
     global PORTAO_GARAGEM
     PORTAO_GARAGEM = portao
 
-
     world.add(
-
 
         carro.add(
             roda1,
@@ -372,7 +381,6 @@ def build_scene():
     )
 
     return world
-
 
 # -------------------------------
 # OpenGL Setup
@@ -494,14 +502,17 @@ def keyboard(key, x, y):
 
     if key == b's' or key == b'S':
         carro.state["vel"] = 5.0   # mover para +X
+        
     elif key == b'w' or key == b'W':
         if carro.state.get("x", 0.0) > -20.0:
             carro.state["vel"] = -5.0  # mover para -X
         else:
             carro.state["vel"] = 0.0
+
     elif key == b' ':
         carro.state["vel"] = 0.0   # parar
-    elif key == b'g' or key == b'G':  # Abrir/fechar portão da garagem
+
+    elif key == b'g' or key == b'G':  # Abrir/fechar portão da garagem (animado)
         if PORTAO_GARAGEM and CARRO:
             # Verificar se o carro está no meio do portão
             x_carro = CARRO.state.get("x", 0.0)
@@ -513,8 +524,12 @@ def keyboard(key, x, y):
             if frente_carro < -8.0 and traseira_carro > -10.0:
                 print("Não é possível fechar o portão: carro está no meio!")
             else:
-                PORTAO_GARAGEM.state["ang_portao"] = 90.0 if PORTAO_GARAGEM.state["ang_portao"] == 0.0 else 0.0
+                # Alterna o alvo (target) — o updater move `ang_portao` gradualmente
+                cur_target = PORTAO_GARAGEM.state.get("target_ang", 0.0)
+                # se o alvo atual for ~0, mudar para 90; caso contrário, fechar para 0
+                PORTAO_GARAGEM.state["target_ang"] = 90.0 if abs(cur_target - 0.0) < 1e-3 else 0.0
         glutPostRedisplay()
+
     elif key == b'e' or key == b'E':  # Abrir/fechar porta esquerda
         if PORTA_ESQUERDA is not None:
             if PORTA_ESQUERDA.state["ang_porta"] < 5.0:
@@ -522,6 +537,7 @@ def keyboard(key, x, y):
             else:
                 PORTA_ESQUERDA.state["ang_porta"] = 0.0
         glutPostRedisplay()
+
     elif key == b'd' or key == b'D':  # Abrir/fechar porta direita
         if PORTA_DIREITA is not None:
             if PORTA_DIREITA.state["ang_porta"] < 5.0:
@@ -557,7 +573,7 @@ def main():
     glutInit(sys.argv)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH)
     glutInitWindowSize(WIN_W, WIN_H)
-    glutCreateWindow(b"Grafo de Cena OO - Carro no eixo X")
+    glutCreateWindow(b"Projeto de Computacao Grafica - Grupo 06")
 
     init_gl()
     SCENE = build_scene()
