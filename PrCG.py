@@ -256,9 +256,9 @@ def tf_obj(x, y, z, sx, sy, sz, ang_deg, ax, ay, az):
     return _tf
 
 
-# posição do carro (agora em X)
 def tf_pos_carro(node):
     glTranslatef(node.state["x"], 0.0, node.state["z"])
+    glRotatef(node.state.get("angle", 0.0), 0.0, 1.0, 0.0)
 
 # mudar o angulo do portão da garagem
 def tf_portao_garagem(node):
@@ -280,6 +280,20 @@ def tf_porta_direita(node):
     glTranslatef(2.0, 0.0, 0.0)
 
 def tf_roda(node):
+    ang = node.state.get("ang_roda", 0.0)
+    glRotatef(ang, 0.0, 0.0, 1.0)
+
+def tf_roda_dianteira(node):
+    # A ordem das transformações é crucial! Queremos: M_final = M_steering * M_rolling
+    # Assim, aplica-se Rolling ao vértice (primeiro), e depois Steering ao resultado.
+    
+    # 1. Direção (Steering)
+    carro = CARRO
+    if carro:
+        steering_angle = carro.state.get("steering", 0.0)
+        glRotatef(steering_angle, 0.0, 1.0, 0.0) 
+
+    # 2. Rotação da roda (Rolling)
     ang = node.state.get("ang_roda", 0.0)
     glRotatef(ang, 0.0, 0.0, 1.0) 
 
@@ -313,36 +327,66 @@ def update_roda(node, dt):
 
 # update no eixo X
 def update_carro(node, dt):
-    # integrate velocity
     vel = node.state.get("vel", 0.0)
-    nova_posicao = node.state["x"] + vel * dt
+    steering = node.state.get("steering", 0.0)
+    angle = node.state.get("angle", 0.0)
 
+    # --- Rotação do carro ---
+    if abs(vel) > 0.01 and abs(steering) > 0.01:
+        wheelbase = 10.0
+        steering_rad = math.radians(steering)
+        turning_radius = wheelbase / math.tan(steering_rad)
+        angle += math.degrees(vel / turning_radius) * dt
+        node.state["angle"] = angle
+
+    # --- Movimento ---
+    angle_rad = math.radians(angle)
+    fwd_x = -math.cos(angle_rad)
+    fwd_z =  math.sin(angle_rad)
+
+    dx = fwd_x * vel * dt
+    dz = fwd_z * vel * dt
+
+    new_x = node.state["x"] + dx
+    new_z = node.state["z"] + dz
+
+    # --- Colisão com portão ---
     ang_portao = PORTAO_GARAGEM.state.get("ang_portao", 0.0)
-    posicao_atual = node.state["x"]
-    frente_carro_atual = posicao_atual - 6.0
-    traseira_carro_atual = posicao_atual + 6.0
-    frente_carro_nova = nova_posicao - 6.0
-    traseira_carro_nova = nova_posicao + 6.0
+    dentro_z = abs(node.state["z"]) < 10.0
 
-    # Bloqueia entrada (ao tentar atravessar o portão fechado de fora para dentro)
-    if ang_portao == 0.0 and vel < 0.0:
-        if frente_carro_atual > -8.0 and frente_carro_nova <= -8.0:
-            node.state["vel"] = 0.0
+    if ang_portao == 0.0 and dentro_z:
+        frente = new_x + fwd_x * 6.0
+        traseira = new_x - fwd_x * 6.0
+
+        # Entrada
+        if node.state["x"] > -8 and frente <= -8:
+            node.state["vel"] = 0
             return
 
-    # Bloqueia saída (ao tentar atravessar o portão fechado de dentro para fora)
-    if ang_portao == 0.0 and vel > 0.0:
-        if traseira_carro_atual < -10.0 and traseira_carro_nova >= -10.0:
-            node.state["vel"] = 0.0
+        # Saída
+        if node.state["x"] < -10 and traseira >= -10:
+            node.state["vel"] = 0
             return
 
-    # Atualizar posição
-    node.state["x"] = nova_posicao
+    # --- Atualizar posição ---
+    node.state["x"] = new_x
+    node.state["z"] = new_z
 
-    # clamp left boundary so the car can't pass x = -30.0
-    if node.state["x"] <= -20.0:
-        node.state["x"] = -20.0
-        node.state["vel"] = 0.0
+    # --- Limites do mundo ---
+    x = node.state["x"]
+    z = node.state["z"]
+
+    if x <= -100:
+        node.state["x"] = -100
+        node.state["vel"] = 0
+    elif x >= 100:
+        node.state["x"] = 100
+        node.state["vel"] = 0
+
+    if z > 100:
+        node.state["z"] = 100
+    elif z < -100:
+        node.state["z"] = -100
 
 
 # -------------------------------
@@ -352,27 +396,28 @@ def build_scene():
     world = Node("World")
 
     carro = Node("Carro", transform=tf_pos_carro, updater=update_carro,
-                 state={"x": 20.0, "z": 0.0, "vel": 0.0})
+                 state={"x": 20.0, "z": 0.0, "vel": 0.0, "angle": 0.0, "steering": 0.0})
     global CARRO
     CARRO = carro
 
-    # Nodes de posição (não têm geometria)
+    # RODAS DIANTEIRAS (com direção)
     roda1_pos = Node("R1_Pos",
                     transform=tf_obj(-5.0, 1.2, -6.5, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
-    roda1 = Node("R1_Dianteira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
-                transform=tf_roda,
+    roda1 = Node("R1_Dianteira", geom=lambda: [geo_roda_dianteira(), geo_jante(flip=False)],
+                transform=tf_roda_dianteira,
                 updater=update_roda,
                 state={"ang_roda": 0.0})
     roda1_pos.add(roda1)
 
     roda2_pos = Node("R2_Pos",
                     transform=tf_obj(-5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
-    roda2 = Node("R2_Dianteira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
-                transform=tf_roda,
+    roda2 = Node("R2_Dianteira", geom=lambda: [geo_roda_dianteira(), geo_jante(flip=True)],
+                transform=tf_roda_dianteira,
                 updater=update_roda,
                 state={"ang_roda": 0.0})
     roda2_pos.add(roda2)
 
+    # RODAS TRASEIRAS (sem direção)
     roda3_pos = Node("R3_Pos",
                     transform=tf_obj(5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     roda3 = Node("R3_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
@@ -395,8 +440,16 @@ def build_scene():
     parachoque = Node("Parachoque", geom=geo_parachoque,
                      transform=tf_obj(-6.0, 3.0, 0.0, 0.5, 2.0, 12.0, 0.0, 0.0, 0.0, 0.0))
 
+    def tf_volante(node):
+        glTranslatef(-1.9, 4.5, 3.0)
+        glRotatef(90.0, 0.0, 1.0, 0.0)
+        # Girar o volante baseado no steering do carro
+        if CARRO:
+            steering = CARRO.state.get("steering", 0.0)
+            glRotatef(-steering * 3.0, 0.0, 0.0, 1.0)  # Multiplicar para efeito visual
+    
     volante = Node("Volante", geom=geo_volante,
-                  transform=tf_obj(-1.9, 4.5, 3.0, 1.0, 1.0, 1.0, 90.0, 0.0, 1.0, 0.0),
+                  transform=tf_volante,
                   state={"ang_volante": 0.0})
 
     parede_traseira = Node("ParedeTraseira", geom=geo_parede_traseira,
@@ -568,42 +621,58 @@ def reshape(w, h):
 def display():
     glClearColor(0.5, 0.7, 1.0, 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
     glLoadIdentity()
-    
-    # Posição do carro
-    car_x = CARRO.state.get("x", 0.0) if CARRO else 0.0
-    car_y = 2.5  # Altura aproximada do centro do carro
-    car_z = CARRO.state.get("z", 0.0) if CARRO else 0.0
-    
-    if camera_mode == 0: # Modo livre
-        cam_x = camera_distance * math.cos(math.radians(camera_angle_v)) * math.sin(math.radians(camera_angle_h))
-        cam_y = camera_height + camera_distance * math.sin(math.radians(camera_angle_v))
-        if cam_y < min_camera_height:
-            cam_y = min_camera_height
-        cam_z = camera_distance * math.cos(math.radians(camera_angle_v)) * math.cos(math.radians(camera_angle_h))
-        gluLookAt(cam_x, cam_y, cam_z,  0.0, 0.0, 0.0,  0.0, 1.0, 0.0)
-    
-    elif camera_mode == 1: # Modo 3ª pessoa
-        offset_back = 15.0 
-        offset_up = 8.0 
-        
-        cam_x = car_x + offset_back
-        cam_y = car_y + offset_up
-        cam_z = car_z
-        
-        gluLookAt(cam_x, cam_y, cam_z,  car_x, car_y, car_z,  0.0, 1.0, 0.0)
-    
-    elif camera_mode == 2: # Modo 1ª pessoa
-        cam_x = car_x + 2.0 
-        cam_y = car_y + 4 
-        cam_z = car_z + 3.0
-        
-        look_x = car_x - 10.0
-        look_y = car_y + 2.5
-        look_z = car_z + 3.0
-        
-        gluLookAt(cam_x, cam_y, cam_z,  look_x, look_y, look_z,  0.0, 1.0, 0.0)
+
+    # Estado do carro
+    car_x = CARRO.state.get("x", 0.0)
+    car_y = 2.5
+    car_z = CARRO.state.get("z", 0.0)
+    car_angle = math.radians(CARRO.state.get("angle", 0.0))
+
+    # Vetores do carro
+    fwd_x = -math.cos(car_angle)
+    fwd_z =  math.sin(car_angle)
+    right_x = -math.sin(car_angle)
+    right_z = -math.cos(car_angle)
+
+    if camera_mode == 0: # Camera livre
+        ang_v = math.radians(camera_angle_v)
+        ang_h = math.radians(camera_angle_h)
+
+        cam_x = camera_distance * math.cos(ang_v) * math.sin(ang_h)
+        cam_y = camera_height + camera_distance * math.sin(ang_v)
+        cam_y = max(cam_y, min_camera_height)
+        cam_z = camera_distance * math.cos(ang_v) * math.cos(ang_h)
+
+        gluLookAt(cam_x, cam_y, cam_z, 0, 0, 0, 0, 1, 0)
+
+    elif camera_mode == 1: # 3ª pessoa
+        dist = 25.0
+        height = 12.0
+
+        cam_x = car_x - fwd_x * dist
+        cam_y = car_y + height
+        cam_z = car_z - fwd_z * dist
+
+        gluLookAt(cam_x, cam_y, cam_z,
+                  car_x, car_y + 4.0, car_z,
+                  0, 1, 0)
+
+    elif camera_mode == 2: # 1ª pessoa
+        back = 3.0
+        up = 4.0
+        side = -3.0
+        look_dist = 20.0
+
+        cam_x = car_x - fwd_x * back + right_x * side
+        cam_y = car_y + up
+        cam_z = car_z - fwd_z * back + right_z * side
+
+        gluLookAt(cam_x, cam_y, cam_z,
+                  cam_x + fwd_x * look_dist,
+                  cam_y,
+                  cam_z + fwd_z * look_dist,
+                  0, 1, 0)
 
     SCENE.draw()
     glutSwapBuffers()
@@ -620,13 +689,15 @@ def idle():
         last_time = t
     dt = t - last_time
     last_time = t
-
+    process_keys()  # Processar teclas mantidas pressionadas
+    
     SCENE.update(dt)
     glutPostRedisplay()
 
+keys_pressed = set() # Variáveis globais para controle contínuo
 
 def keyboard(key, x, y):
-    global CARRO
+    global CARRO, keys_pressed
 
     # debug
     print(f"keyboard: {key}")
@@ -642,26 +713,23 @@ def keyboard(key, x, y):
     if carro is None:
         return
 
+    # Adicionar tecla ao conjunto de teclas pressionadas
+    keys_pressed.add(key)
+
     print("carro.x =", carro.state.get("x"), "vel =", carro.state.get("vel"))
 
-    if key == b's' or key == b'S':
-        carro.state["vel"] = 5.0   # mover para +X
-        
-    elif key == b'w' or key == b'W':
-        if carro.state.get("x", 0.0) > -20.0:
-            carro.state["vel"] = -5.0  # mover para -X
-        else:
-            carro.state["vel"] = 0.0
-
-    elif key == b' ':
+    if key == b' ':
         carro.state["vel"] = 0.0   # parar
+        carro.state["steering"] = 0.0  # centralizar direção
 
     elif key == b'g' or key == b'G':  # Abrir/fechar portão da garagem (animado)
         if PORTAO_GARAGEM and CARRO:
             # Verificar se o carro está no meio do portão
             x_carro = CARRO.state.get("x", 0.0)
-            frente_carro = x_carro - 6.0
-            traseira_carro = x_carro + 6.0
+            angle = CARRO.state.get("angle", 0.0)
+            angle_rad = math.radians(angle)
+            frente_carro = x_carro - 6.0 * math.sin(angle_rad)
+            traseira_carro = x_carro + 6.0 * math.sin(angle_rad)
 
             # Portão está entre x = -10 e x = -8 aproximadamente
             # Bloquear se o carro está atravessando o portão
@@ -674,7 +742,7 @@ def keyboard(key, x, y):
                 PORTAO_GARAGEM.state["target_ang"] = 90.0 if abs(cur_target - 0.0) < 1e-3 else 0.0
         glutPostRedisplay()
 
-    elif key == b'e' or key == b'E':  # Abrir/fechar porta esquerda
+    elif key == b'q' or key == b'Q':  # Abrir/fechar porta esquerda
         if PORTA_ESQUERDA is not None:
             if PORTA_ESQUERDA.state["ang_porta"] < 5.0:
                 PORTA_ESQUERDA.state["ang_porta"] = 60.0
@@ -682,7 +750,7 @@ def keyboard(key, x, y):
                 PORTA_ESQUERDA.state["ang_porta"] = 0.0
         glutPostRedisplay()
 
-    elif key == b'd' or key == b'D':  # Abrir/fechar porta direita
+    elif key == b'e' or key == b'E':  # Abrir/fechar porta direita
         if PORTA_DIREITA is not None:
             if PORTA_DIREITA.state["ang_porta"] < 5.0:
                 PORTA_DIREITA.state["ang_porta"] = 60.0
@@ -697,6 +765,69 @@ def keyboard(key, x, y):
         print(f"Modo de câmara: {mode_names[camera_mode]}")
         glutPostRedisplay()
 
+def keyboard_up(key, x, y):
+    """Chamado quando uma tecla é solta"""
+    global keys_pressed
+    if key in keys_pressed:
+        keys_pressed.remove(key)
+
+def process_keys():
+    global CARRO, keys_pressed
+    if CARRO is None:
+        return
+ 
+    dt = 0.016 # aproximadamente 60 FPS
+    max_speed = 15.0 # unidades/s
+    acceleration = 30.0 # unidades/s²
+    max_steering = 35.0 # graus máximos de direção
+    steering_speed = 120.0 # graus/s
+    return_speed = 80.0 # graus/s
+
+    vel = CARRO.state.get("vel", 0.0)
+    steering = CARRO.state.get("steering", 0.0)
+
+    # Normalizar teclas
+    pressed = {k.lower() for k in keys_pressed}
+
+    # --- Velocidade (W/S) ---
+    if b"w" in pressed:
+        vel = min(max_speed, vel + acceleration * dt)
+    elif b"s" in pressed:
+        vel = max(-max_speed * 0.6, vel - acceleration * dt)
+    else:
+        # Fricção
+        if abs(vel) > 0.1:
+            fric = 20.0 * dt
+            vel -= fric if vel > 0 else -fric
+        else:
+            vel = 0.0
+
+    # --- Direção (A/D) ---
+    moving = abs(vel) > 0.5
+    
+    if moving:
+        if b"a" in pressed:
+            steering += steering_speed * dt  # Esquerda
+        elif b"d" in pressed:
+            steering -= steering_speed * dt  # Direita
+        else:
+            # Voltar ao centro
+            if abs(steering) > 0.5:
+                steering -= return_speed * dt * (1 if steering > 0 else -1)
+            else:
+                steering = 0.0
+    else:
+        # Sem movimento, roda recentra igual
+        if abs(steering) > 0.5:
+            steering -= return_speed * dt * (1 if steering > 0 else -1)
+        else:
+            steering = 0.0
+
+    # Limites finais
+    steering = max(-max_steering, min(max_steering, steering))
+
+    CARRO.state["vel"] = vel
+    CARRO.state["steering"] = steering
 
 def special_keys(key, x, y):
     """Função para controlar a camera conforme o enunciado, pelo utilizador)."""
@@ -733,6 +864,7 @@ def main():
     glutReshapeFunc(reshape)
     glutIdleFunc(idle)
     glutKeyboardFunc(keyboard)
+    glutKeyboardUpFunc(keyboard_up) 
     glutSpecialFunc(special_keys)
     glutMainLoop()
 
