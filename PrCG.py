@@ -29,7 +29,7 @@ def geo_parede():
     glutSolidCube(1.0)
 
 def geo_portao():
-    glColor3f(0.6, 0.4, 0.2)
+    glColor3f(0.3, 0.3, 0.3)
     glScalef(0.5, 10.0, 20.0)
     glutSolidCube(1.0)
 
@@ -116,7 +116,7 @@ def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
 
 def draw_chao(): #adaptado da TP06 do 2-cube-textured.py
     S = 100.0
-    T = 20.0  # Quantas vezes multiplicar a textura no chão (menor -> tiles maiores para relva)
+    T = 50.0  # Quantas vezes multiplicar a textura no chão (menor -> tiles maiores para relva)
     
     # Ativar texturas apenas para o chão
     glEnable(GL_TEXTURE_2D)
@@ -340,7 +340,7 @@ def build_scene():
     parede3 = Node("Parede", geom=geo_parede,
                 transform=tf_obj(-30.0, 5.0, 0.0, 20.0, 10.0, 1.0, 90.0, 0.0, 1.0, 0.0))
     teto = Node("Teto", geom=geo_parede,
-                transform=tf_obj(-20.0, 10.0, 0.0, 20.0, 20.0, 1.0, 90.0, 1.0, 0.0, 0.0))
+                transform=tf_obj(-20.0, 9.5, 0.0, 20.0, 20.0, 1.0, 90.0, 1.0, 0.0, 0.0))
 
     portao = Node("Portao", geom=geo_portao, transform=tf_portao_garagem,
                   updater=update_portao,
