@@ -48,6 +48,10 @@ def geo_porta():
     glColor3f(0.7, 0.05, 0.05)
     glutSolidCube(1.0)
 
+def geo_capo():
+    glColor3f(0.8, 0.1, 0.1)
+    glutSolidCube(1.0)
+
 def geo_volante():
     # Aro do volante (torus)
     glColor3f(0.1, 0.1, 0.1)  # Preto
@@ -210,7 +214,7 @@ def build_scene():
 
     # Volante (posicionado na frente do carro, inclinado)
     volante = Node("Volante", geom=geo_volante,
-                  transform=tf_obj(-4.5, 4.5, 3.0, 1.0, 1.0, 1.0, 90.0, 0.0, 1.0, 0.0),
+                  transform=tf_obj(-1.9, 4.5, 3.0, 1.0, 1.0, 1.0, 90.0, 0.0, 1.0, 0.0),
                   state={"ang_volante": 0.0})
 
     parede_traseira = Node("ParedeTraseira", geom=geo_parede_traseira,
@@ -240,9 +244,14 @@ def build_scene():
     parede_lat_dir_tras = Node("ParedeLateralDirTras", geom=geo_parede_lateral,
                                transform=tf_obj(4.0, 3.5, -6.0, 4.0, 3.0, 0.3, 0.0, 0.0, 0.0, 0.0))
 
-    global PORTA_ESQUERDA, PORTA_DIREITA
+    capo = Node("Capo", geom=geo_capo,
+               state={"ang_capo": 0.0},
+            transform=tf_obj(-4.0, 4.25, 0.0, 4, 0.5, 12.0, 0.0, 0.0, 0.0, 0.0))
+
+    global PORTA_ESQUERDA, PORTA_DIREITA, CAPO
     PORTA_ESQUERDA = porta_esquerda
     PORTA_DIREITA = porta_direita
+    CAPO = capo
 
     # Chão
     chao = Node("Chão", geom=draw_chao,
@@ -285,7 +294,8 @@ def build_scene():
             parede_lat_esq_tras,
             parede_lat_dir_diant,
             porta_direita,
-            parede_lat_dir_tras
+            parede_lat_dir_tras,
+            capo
         ),
         chao,
         garagem.add(
@@ -310,6 +320,7 @@ CARRO = None
 PORTAO_GARAGEM = None
 PORTA_ESQUERDA = None
 PORTA_DIREITA = None
+CAPO = None
 # Camera control (user-controllable)
 camera_distance = 35.0
 camera_angle_h = 45.0
