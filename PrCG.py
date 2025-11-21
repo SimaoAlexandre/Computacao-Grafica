@@ -439,8 +439,8 @@ def build_scene():
                          transform=tf_obj(-6.3, 3.0, 0.0, 1.0, 1.0, 1.0, -90.0, 0.0, 1.0, 0.0))
     
     vidro_frente = Node("VidroFrente", geom=geo_vidro,
-                       transform=tf_obj(-2.0, 5.5, 0.0, 11.0, 2.0, 4.0, 90.0, 0.0, 1.0, 0.0))
-    
+                       transform=tf_obj(-3.0, 5.5, 0.0, 11.0, 2.0, 4.0, 90.0, 0.0, 1.0, 0.0))
+
     global PORTA_ESQUERDA, PORTA_DIREITA, CAPO
     PORTA_ESQUERDA = porta_esquerda
     PORTA_DIREITA = porta_direita
