@@ -368,6 +368,33 @@ def update_carro(node, dt):
             node.state["vel"] = 0
             return
 
+    # --- Colisão com paredes da garagem ---
+    # Definir bounding box do carro (aproximada)
+    car_half_size = 6 # Carro tem largura ~12
+    car_min_x, car_max_x = new_x - car_half_size, new_x + car_half_size
+    car_min_z, car_max_z = new_z - car_half_size, new_z + car_half_size
+
+    # Paredes: (min_x, max_x, min_z, max_z)
+    walls = [
+        (-30.5, -9.5, -11.0, -9.0), # Parede Z-10 (Sul)
+        (-30.5, -9.5,  9.0, 11.0), # Parede Z+10 (Norte)
+        (-31.0, -29.0, -11.0, 11.0) # Parede Traseira (Oeste)
+    ]
+
+    collision = False
+    for (wx1, wx2, wz1, wz2) in walls:
+        # Check overlap
+        overlap_x = min(car_max_x, wx2) - max(car_min_x, wx1)
+        overlap_z = min(car_max_z, wz2) - max(car_min_z, wz1)
+
+        if overlap_x > 0 and overlap_z > 0:
+            collision = True
+            break
+    
+    if collision:
+        node.state["vel"] = 0
+        return
+
     # --- Atualizar posição ---
     node.state["x"] = new_x
     node.state["z"] = new_z
