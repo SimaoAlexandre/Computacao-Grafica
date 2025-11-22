@@ -191,6 +191,34 @@ def geo_arvore():
     glutSolidCone(2.5, 4.0, 12, 12)
     glPopMatrix()
 
+def geo_poste():
+    # Poste
+    glColor3f(0.3, 0.3, 0.35)
+    glPushMatrix()
+    glRotatef(-90, 1, 0, 0)
+    glutSolidCylinder(0.25, 10.0, 16, 16)
+    glPopMatrix()
+
+    # Braço
+    glPushMatrix()
+    glTranslatef(0.0, 9.5, 0.0)
+    glRotatef(90, 0, 1, 0) # Aponta para X positivo
+    glutSolidCylinder(0.15, 3.0, 12, 12)
+    glPopMatrix()
+
+    # Lampada (globo)
+    glPushMatrix()
+    glTranslatef(3.0, 9.3, 0.0)
+    
+    # Material emissivo para parecer acesa
+    glPushAttrib(GL_LIGHTING_BIT)
+    glMaterialfv(GL_FRONT, GL_EMISSION, (1.0, 1.0, 0.8, 1.0))
+    glColor3f(1.0, 1.0, 0.8)
+    glutSolidSphere(0.4, 16, 16)
+    glPopAttrib()
+    
+    glPopMatrix()
+
 def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
     if not os.path.isfile(path):
         print("Texture not found:", path); sys.exit(1)
@@ -419,12 +447,18 @@ def update_carro(node, dt):
         node.state["vel"] = 0
         return
 
-    # --- Colisão nas árvores ---
-    trees = [(-15.0, 17.0), (-15.0, -17.0)]
-    min_dist = 6.0 + 1.5 # Raio do carro (~6) + Raio da árvore (~1.5)
+    # --- Colisão nas árvores e poste ---
+    # Lista de obstáculos circulares: (x, z, raio_obstaculo)
+    obstacles = [
+        (-15.0, 17.0, 5), (-15.0, -17.0, 5), # Arvores
+        (-10.0, 13.0, 2.5),(-10.0, -13.0, 2.5) # Postes
+    ]
+    
+    car_radius = 6.0
 
-    for (tx, tz) in trees:
-        dist_sq = (new_x - tx)**2 + (new_z - tz)**2
+    for (ox, oz, r_obs) in obstacles:
+        min_dist = car_radius + r_obs
+        dist_sq = (new_x - ox)**2 + (new_z - oz)**2
         if dist_sq < min_dist**2:
             node.state["vel"] = 0
             return
@@ -614,7 +648,11 @@ def build_scene():
         Node("Arvore", geom=geo_arvore,
              transform=tf_obj(-15.0, 0.0, 17.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0)),
         Node("Arvore2", geom=geo_arvore,
-             transform=tf_obj(-15.0, 0.0, -17.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+             transform=tf_obj(-15.0, 0.0, -17.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0)),
+        Node("Poste", geom=geo_poste,
+             transform=tf_obj(-10.0, 0.0, 13.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0)),
+        Node("Poste2", geom=geo_poste,
+             transform=tf_obj(-10.0, 0.0, -13.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     )
 
     return world
@@ -661,6 +699,24 @@ def init_gl():
     glLightfv(GL_LIGHT1, GL_DIFFUSE,  (1.0, 0.7, 0.4, 1.0))    # Cor laranja/quente
     glLightfv(GL_LIGHT1, GL_AMBIENT,  (0.1, 0.05, 0.0, 1.0))
     glLightfv(GL_LIGHT1, GL_SPECULAR, (0.8, 0.6, 0.3, 1.0))
+
+    glEnable(GL_LIGHT2)
+    # Luz do Poste 1: (-10, 0, 13) -> Lâmpada em (-7, 9.3, 13)
+    glLightfv(GL_LIGHT2, GL_POSITION, (-7.0, 9.3, 13.0, 1.0))
+    glLightfv(GL_LIGHT2, GL_DIFFUSE,  (1.0, 1.0, 0.9, 1.0))
+    glLightfv(GL_LIGHT2, GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
+    glLightf(GL_LIGHT2, GL_CONSTANT_ATTENUATION, 0.5)
+    glLightf(GL_LIGHT2, GL_LINEAR_ATTENUATION, 0.05)
+    glLightf(GL_LIGHT2, GL_QUADRATIC_ATTENUATION, 0.01)
+
+    glEnable(GL_LIGHT3)
+    # Luz do Poste 2: (-10, 0, -13) -> Lâmpada em (-7, 9.3, -13)
+    glLightfv(GL_LIGHT3, GL_POSITION, (-7.0, 9.3, -13.0, 1.0))
+    glLightfv(GL_LIGHT3, GL_DIFFUSE,  (1.0, 1.0, 0.9, 1.0))
+    glLightfv(GL_LIGHT3, GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
+    glLightf(GL_LIGHT3, GL_CONSTANT_ATTENUATION, 0.5)
+    glLightf(GL_LIGHT3, GL_LINEAR_ATTENUATION, 0.05)
+    glLightf(GL_LIGHT3, GL_QUADRATIC_ATTENUATION, 0.01)
 
     glEnable(GL_COLOR_MATERIAL)
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
