@@ -321,7 +321,7 @@ def update_roda(node, dt):
     if carro:
         vel = carro.state.get("vel", 0.0)
         raio = 1.2
-        rot_speed = -(vel / (2.0 * math.pi * raio)) * 360.0
+        rot_speed = (vel / (2.0 * math.pi * raio)) * 360.0
         ang_atual = node.state.get("ang_roda", 0.0)
         node.state["ang_roda"] = ang_atual + rot_speed * dt
 
