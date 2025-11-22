@@ -82,11 +82,11 @@ def geo_matricula(): #Inspirado na TP06 do 2-cube-textured.py
     glEnable(GL_TEXTURE_2D)
     glBindTexture(GL_TEXTURE_2D, tex_matricula)
     glColor3f(1.0, 1.0, 1.0)
-    
+
     w = 7.0 # largura
     h = 1.5  # altura
     d = 0.05  # espessura
-    
+
     glBegin(GL_QUADS)
     # Frente da matrícula (face principal com textura)
     glNormal3f(0, 0, 1)
@@ -94,7 +94,7 @@ def geo_matricula(): #Inspirado na TP06 do 2-cube-textured.py
     glTexCoord2f(1, 0); glVertex3f( w/2, -h/2, d/2)
     glTexCoord2f(1, 1); glVertex3f( w/2,  h/2, d/2)
     glTexCoord2f(0, 1); glVertex3f(-w/2,  h/2, d/2)
-    
+
     # Trás da matrícula
     glNormal3f(0, 0, -1)
     glTexCoord2f(1, 0); glVertex3f(-w/2, -h/2, -d/2)
@@ -102,7 +102,7 @@ def geo_matricula(): #Inspirado na TP06 do 2-cube-textured.py
     glTexCoord2f(0, 1); glVertex3f( w/2,  h/2, -d/2)
     glTexCoord2f(1, 1); glVertex3f(-w/2,  h/2, -d/2)
     glEnd()
-    
+
     glDisable(GL_TEXTURE_2D)
 
 def geo_volante():
@@ -129,22 +129,22 @@ def geo_volante():
 def geo_vidro():
     # Desabilitar escrita no depth buffer para transparência bidirecional
     glDepthMask(GL_FALSE)
-    
+
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    
+
     glDisable(GL_CULL_FACE)
-    
+
     # Manter iluminação ligada para reflexos suaves
     # Configurar material para reflexo ligeiro
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (0.3, 0.3, 0.3, 1.0))
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0)
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (0.2, 0.2, 0.25, 1.0))
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (0.7, 0.8, 0.85, 0.15))
-    
+
     # Vidro transparente com leve tom azulado
     glColor4f(0.7, 0.8, 0.9, 0.15)  # RGBA - alpha=0.15 para transparência com reflexo
-    
+
     glBegin(GL_QUADS)
     glNormal3f(0.0, 0.0, 1.0)  # Normal para iluminação correta
     glVertex3f(-0.5, -0.5, 0.0)
@@ -152,7 +152,7 @@ def geo_vidro():
     glVertex3f( 0.5,  0.5, 0.0)
     glVertex3f(-0.5,  0.5, 0.0)
     glEnd()
-    
+
     glBegin(GL_QUADS)
     glNormal3f(0.0, 0.0, -1.0)  # Normal oposta para a outra face
     glVertex3f(-0.5, -0.5, 0.0)
@@ -160,10 +160,10 @@ def geo_vidro():
     glVertex3f( 0.5,  0.5, 0.0)
     glVertex3f( 0.5, -0.5, 0.0)
     glEnd()
-    
+
     glEnable(GL_CULL_FACE)
     glDisable(GL_BLEND)
-    
+
     # Reativar escrita no depth buffer
     glDepthMask(GL_TRUE)
 
@@ -193,7 +193,7 @@ def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
 def draw_chao(): #adaptado da TP06 do 2-cube-textured.py
     S = 100.0
     T = 50.0  # Quantas vezes multiplicar a textura no chão (menor -> tiles maiores para relva)
-    
+
     # Ativar texturas apenas para o chão
     glEnable(GL_TEXTURE_2D)
     glBindTexture(GL_TEXTURE_2D, tex_floor)
@@ -206,7 +206,7 @@ def draw_chao(): #adaptado da TP06 do 2-cube-textured.py
     glTexCoord2f(T,    T ); glVertex3f( S, 0.0, -S)
     glTexCoord2f(0.0,  T ); glVertex3f(-S, 0.0, -S)
     glEnd()
-    
+
     # Desativar texturas para não afetar outros objetos
     glDisable(GL_TEXTURE_2D)
 
@@ -286,19 +286,19 @@ def tf_roda(node):
 def tf_roda_dianteira(node):
     # A ordem das transformações é crucial! Queremos: M_final = M_steering * M_rolling
     # Assim, aplica-se Rolling ao vértice (primeiro), e depois Steering ao resultado.
-    
+
     # 1. Direção (Steering)
     carro = CARRO
     if carro:
         steering_angle = carro.state.get("steering", 0.0)
-        glRotatef(steering_angle, 0.0, 1.0, 0.0) 
+        glRotatef(steering_angle, 0.0, 1.0, 0.0)
 
     # 2. Rotação da roda (Rolling)
     ang = node.state.get("ang_roda", 0.0)
-    glRotatef(ang, 0.0, 0.0, 1.0) 
+    glRotatef(ang, 0.0, 0.0, 1.0)
 
 def update_portao(node, dt):
-    
+
     cur = node.state.get("ang_portao", 0.0)
     target = node.state.get("target_ang", cur)
 
@@ -425,7 +425,7 @@ def build_scene():
                 updater=update_roda,
                 state={"ang_roda": 0.0})
     roda3_pos.add(roda3)
-    
+
     roda4_pos = Node("R4_Pos",
                     transform=tf_obj(5.0, 1.2, -6.6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     roda4 = Node("R4_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
@@ -446,8 +446,8 @@ def build_scene():
         # Girar o volante baseado no steering do carro
         if CARRO:
             steering = CARRO.state.get("steering", 0.0)
-            glRotatef(-steering * 3.0, 0.0, 0.0, 1.0)  # Multiplicar para efeito visual
-    
+            glRotatef(steering * 3.0, 0.0, 0.0, 1.0)  # Multiplicar para efeito visual
+
     volante = Node("Volante", geom=geo_volante,
                   transform=tf_volante,
                   state={"ang_volante": 0.0})
@@ -460,7 +460,7 @@ def build_scene():
 
     porta_esquerda = Node("PortaEsquerda", geom=geo_porta, transform=tf_porta_esquerda,
                          state={"ang_porta": 0.0})
-    
+
     porta_esq_geom = Node("PortaEsqGeom", geom=geo_porta,
                          transform=tf_obj(0.0, 0.0, 0.0, 4.0, 3.0, 0.3, 0.0, 0.0, 0.0, 0.0))
 
@@ -487,10 +487,10 @@ def build_scene():
 
     matricula_tras = Node("MatriculaTras", geom=geo_matricula,
                            transform=tf_obj(6.3, 3.0, 0.0, 1.0, 1.0, 1.0, 90.0, 0.0, 1.0, 0.0))
-    
+
     matricula_frente = Node("MatriculaFrente", geom=geo_matricula,
                          transform=tf_obj(-6.3, 3.0, 0.0, 1.0, 1.0, 1.0, -90.0, 0.0, 1.0, 0.0))
-    
+
     vidro_frente = Node("VidroFrente", geom=geo_vidro,
                        transform=tf_obj(-3.0, 5.5, 0.0, 11.0, 2.0, 4.0, 90.0, 0.0, 1.0, 0.0))
 
@@ -577,7 +577,7 @@ min_camera_height = 1.0
 
 def init_gl():
     global tex_floor, tex_matricula
-    
+
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_CULL_FACE)
     glCullFace(GL_BACK)
@@ -599,9 +599,9 @@ def init_gl():
 
     glEnable(GL_COLOR_MATERIAL)
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-    
+
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
-    
+
     tex_floor = load_texture("Mosaico_Chao.png", repeat=True)
     tex_matricula = load_texture("Matrícula.png", repeat=False)
 
@@ -690,7 +690,7 @@ def idle():
     dt = t - last_time
     last_time = t
     process_keys()  # Processar teclas mantidas pressionadas
-    
+
     SCENE.update(dt)
     glutPostRedisplay()
 
@@ -753,7 +753,7 @@ def keyboard(key, x, y):
             else:
                 PORTA_DIREITA.state["ang_porta"] = 0.0
         glutPostRedisplay()
-    
+
     elif key == b'c' or key == b'C':  # Alternar modo de câmara
         global camera_mode
         camera_mode = (camera_mode + 1) % 3
@@ -771,12 +771,12 @@ def process_keys():
     global CARRO, keys_pressed
     if CARRO is None:
         return
- 
+
     dt = 0.016 # aproximadamente 60 FPS
     max_speed = 30.0 # Aumentado para 30
     acceleration = 2.0 # unidades/s², a aceleração do carro
     braking_force = 5.0 # Travagem suave (não para logo)
-    
+
     max_steering = 35.0 # graus máximos de direção
     steering_speed = 120.0 # graus/s
     return_speed = 80.0 # graus/s
@@ -798,7 +798,7 @@ def process_keys():
                 vel = 0.0
         else:
             vel = 0.0
-            
+
     elif b"w" in pressed:
         vel = min(max_speed, vel + acceleration * dt)
     elif b"s" in pressed:
@@ -813,7 +813,7 @@ def process_keys():
 
     # --- Direção (A/D) ---
     moving = abs(vel) > 0.5
-    
+
     if moving:
         if b"a" in pressed:
             steering += steering_speed * dt  # Esquerda
@@ -873,7 +873,7 @@ def main():
     glutReshapeFunc(reshape)
     glutIdleFunc(idle)
     glutKeyboardFunc(keyboard)
-    glutKeyboardUpFunc(keyboard_up) 
+    glutKeyboardUpFunc(keyboard_up)
     glutSpecialFunc(special_keys)
     glutMainLoop()
 
