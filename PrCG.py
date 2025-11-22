@@ -775,7 +775,7 @@ def process_keys():
     dt = 0.016 # aproximadamente 60 FPS
     max_speed = 30.0 # Aumentado para 30
     acceleration = 2.0 # unidades/s², a aceleração do carro
-    braking_force = 5.0 # Travagem suave (não para logo)
+    braking_force = 15.0 # Travagem mais forte (era 5.0)
 
     max_steering = 35.0 # graus máximos de direção
     steering_speed = 120.0 # graus/s
@@ -800,13 +800,27 @@ def process_keys():
             vel = 0.0
 
     elif b"w" in pressed:
-        vel = min(max_speed, vel + acceleration * dt)
+        # Se está a andar para trás, trava forte (como o travão)
+        if vel < -0.5:
+            vel += braking_force * dt
+            if vel > 0:
+                vel = 0.0
+        # Se está parado ou devagar, pode avançar
+        else:
+            vel = min(max_speed, vel + acceleration * dt)
     elif b"s" in pressed:
-        vel = max(-max_speed * 0.6, vel - acceleration * dt)
+        # Se está a andar para a frente, trava forte (como o travão)
+        if vel > 0.5:
+            vel -= braking_force * dt
+            if vel < 0:
+                vel = 0.0
+        # Se está parado ou devagar, pode recuar
+        else:
+            vel = max(-max_speed * 0.6, vel - acceleration * dt)
     else:
-        # Fricção
+        # Fricção natural (sem premir nada) - mais suave
         if abs(vel) > 0.1:
-            fric = 5.0 * dt # Fricção mais suave
+            fric = 2.5 * dt # Fricção natural reduzida (era 5.0)
             vel -= fric if vel > 0 else -fric
         else:
             vel = 0.0
