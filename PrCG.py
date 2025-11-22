@@ -167,6 +167,30 @@ def geo_vidro():
     # Reativar escrita no depth buffer
     glDepthMask(GL_TRUE)
 
+def geo_arvore():
+    # Tronco
+    glColor3f(0.4, 0.26, 0.13)
+    glPushMatrix()
+    glRotatef(-90, 1, 0, 0) # Cilindro cresce em Z, rodar para Y
+    glutSolidCylinder(0.8, 4.0, 12, 12)
+    glPopMatrix()
+
+    #(Cone 1)
+    glColor3f(0.0, 0.5, 0.0)
+    glPushMatrix()
+    glTranslatef(0.0, 3.0, 0.0)
+    glRotatef(-90, 1, 0, 0)
+    glutSolidCone(3.0, 5.0, 12, 12)
+    glPopMatrix()
+
+    #(Cone 2 - Topo)
+    glColor3f(0.0, 0.7, 0.0)
+    glPushMatrix()
+    glTranslatef(0.0, 5.0, 0.0)
+    glRotatef(-90, 1, 0, 0)
+    glutSolidCone(2.5, 4.0, 12, 12)
+    glPopMatrix()
+
 def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
     if not os.path.isfile(path):
         print("Texture not found:", path); sys.exit(1)
@@ -395,6 +419,16 @@ def update_carro(node, dt):
         node.state["vel"] = 0
         return
 
+    # --- Colisão nas árvores ---
+    trees = [(-15.0, 17.0), (-15.0, -17.0)]
+    min_dist = 6.0 + 1.5 # Raio do carro (~6) + Raio da árvore (~1.5)
+
+    for (tx, tz) in trees:
+        dist_sq = (new_x - tx)**2 + (new_z - tz)**2
+        if dist_sq < min_dist**2:
+            node.state["vel"] = 0
+            return
+
     # --- Atualizar posição ---
     node.state["x"] = new_x
     node.state["z"] = new_z
@@ -576,7 +610,11 @@ def build_scene():
             parede3,
             teto,
             portao
-        )
+        ),
+        Node("Arvore", geom=geo_arvore,
+             transform=tf_obj(-15.0, 0.0, 17.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0)),
+        Node("Arvore2", geom=geo_arvore,
+             transform=tf_obj(-15.0, 0.0, -17.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     )
 
     return world
