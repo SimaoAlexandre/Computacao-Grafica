@@ -262,6 +262,26 @@ def draw_chao(): #adaptado da TP06 do 2-cube-textured.py
     # Desativar texturas para não afetar outros objetos
     glDisable(GL_TEXTURE_2D)
 
+def draw_estrada():
+    # Desativar texturas para desenhar geometria sólida
+    glDisable(GL_TEXTURE_2D)
+    
+    # Asfalto
+    glColor3f(0.2, 0.2, 0.2) # Cinzento escuro
+    y = 0.02 # Ligeiramente acima do chão para evitar z-fighting
+    
+    # Dimensões da estrada
+    x_min, x_max = -29.5, 100.0
+    z_width = 10.0
+    
+    glBegin(GL_QUADS)
+    glNormal3f(0, 1, 0)
+    glVertex3f(x_min, y, z_width)
+    glVertex3f(x_max, y, z_width)
+    glVertex3f(x_max, y, -z_width)
+    glVertex3f(x_min, y, -z_width)
+    glEnd()
+
 # -------------------------------
 # Classe Node
 # -------------------------------
@@ -597,6 +617,9 @@ def build_scene():
     chao = Node("Chão", geom=draw_chao,
                 transform=tf_obj(0.0, -1.0, 0.0, 1.1, 1.1, 1.1, 0.0, 0.0, 0.0, 0.0))
 
+    estrada = Node("Estrada", geom=draw_estrada,
+                   transform=tf_obj(0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+
     garagem = Node("Garagem", geom=draw_chao)
 
     parede1 = Node("Parede", geom=geo_parede,
@@ -645,6 +668,7 @@ def build_scene():
             teto,
             portao
         ),
+        estrada,
         Node("Arvore", geom=geo_arvore,
              transform=tf_obj(-15.0, 0.0, 17.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0)),
         Node("Arvore2", geom=geo_arvore,
@@ -947,21 +971,12 @@ def process_keys():
             vel = 0.0
 
     # --- Direção (A/D) ---
-    moving = abs(vel) > 0.5
-
-    if moving:
-        if b"a" in pressed:
-            steering += steering_speed * dt  # Esquerda
-        elif b"d" in pressed:
-            steering -= steering_speed * dt  # Direita
-        else:
-            # Voltar ao centro
-            if abs(steering) > 0.5:
-                steering -= return_speed * dt * (1 if steering > 0 else -1)
-            else:
-                steering = 0.0
+    if b"a" in pressed:
+        steering += steering_speed * dt  # Esquerda
+    elif b"d" in pressed:
+        steering -= steering_speed * dt  # Direita
     else:
-        # Sem movimento, roda recentra igual
+        # Voltar ao centro se nenhuma tecla for pressionada
         if abs(steering) > 0.5:
             steering -= return_speed * dt * (1 if steering > 0 else -1)
         else:
