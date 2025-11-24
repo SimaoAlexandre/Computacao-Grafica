@@ -435,8 +435,8 @@ def update_roda(node, dt):
         ang_atual = node.state.get("ang_roda", 0.0)
         node.state["ang_roda"] = ang_atual + rot_speed * dt
 
-# update no eixo X
 def update_carro(node, dt):
+    # --- Estados básicos ---
     vel = node.state.get("vel", 0.0)
     steering = node.state.get("steering", 0.0)
     angle = node.state.get("angle", 0.0)
@@ -451,95 +451,52 @@ def update_carro(node, dt):
 
     # --- Movimento ---
     angle_rad = math.radians(angle)
-    fwd_x = -math.cos(angle_rad)
-    fwd_z =  math.sin(angle_rad)
-
-    dx = fwd_x * vel * dt
-    dz = fwd_z * vel * dt
-
-    new_x = node.state["x"] + dx
-    new_z = node.state["z"] + dz
+    fwd_x, fwd_z = -math.cos(angle_rad), math.sin(angle_rad)
+    new_x = node.state["x"] + fwd_x * vel * dt
+    new_z = node.state["z"] + fwd_z * vel * dt
 
     # --- Colisão com portão ---
     ang_portao = PORTAO_GARAGEM.state.get("ang_portao", 0.0)
     dentro_z = abs(node.state["z"]) < 10.0
-
     if ang_portao == 0.0 and dentro_z:
-        frente = new_x + fwd_x * 6.0
-        traseira = new_x - fwd_x * 6.0
-
-        # Entrada
-        if node.state["x"] > -8 and frente <= -8:
+        frente, traseira = new_x + fwd_x * 6.0, new_x - fwd_x * 6.0
+        if (node.state["x"] > -8 and frente <= -8) or (node.state["x"] < -10 and traseira >= -10):
             node.state["vel"] = 0
             return
 
-        # Saída
-        if node.state["x"] < -10 and traseira >= -10:
-            node.state["vel"] = 0
-            return
-
-    # --- Colisão com paredes da garagem ---
-    # Definir bounding box do carro (aproximada)
-    car_half_size = 6 # Carro tem largura ~12
+    # --- Colisão com paredes ---
+    car_half_size = 6
     car_min_x, car_max_x = new_x - car_half_size, new_x + car_half_size
     car_min_z, car_max_z = new_z - car_half_size, new_z + car_half_size
 
-    # Paredes: (min_x, max_x, min_z, max_z)
     walls = [
         (-30.5, -9.5, -11.0, -9.0), # Parede Z-10 (Sul)
         (-30.5, -9.5,  9.0, 11.0), # Parede Z+10 (Norte)
         (-31.0, -29.0, -11.0, 11.0) # Parede Traseira (Oeste)
     ]
 
-    collision = False
-    for (wx1, wx2, wz1, wz2) in walls:
-        # Check overlap
-        overlap_x = min(car_max_x, wx2) - max(car_min_x, wx1)
-        overlap_z = min(car_max_z, wz2) - max(car_min_z, wz1)
-
-        if overlap_x > 0 and overlap_z > 0:
-            collision = True
-            break
-    
-    if collision:
+    if any(min(car_max_x, wx2) - max(car_min_x, wx1) > 0 and min(car_max_z, wz2) - max(car_min_z, wz1) > 0
+           for wx1, wx2, wz1, wz2 in walls):
         node.state["vel"] = 0
         return
 
     # --- Colisão nas árvores e poste ---
-    # Lista de obstáculos circulares: (x, z, raio_obstaculo)
     obstacles = [
         (-15.0, 17.0, 5), (-15.0, -17.0, 5), # Arvores
         (-10.0, 13.0, 2.5),(-10.0, -13.0, 2.5) # Postes
     ]
-    
     car_radius = 6.0
-
-    for (ox, oz, r_obs) in obstacles:
-        min_dist = car_radius + r_obs
-        dist_sq = (new_x - ox)**2 + (new_z - oz)**2
-        if dist_sq < min_dist**2:
-            node.state["vel"] = 0
-            return
+    if any((new_x - ox)**2 + (new_z - oz)**2 < (car_radius + r_obs)**2
+           for ox, oz, r_obs in obstacles):
+        node.state["vel"] = 0
+        return
 
     # --- Atualizar posição ---
-    node.state["x"] = new_x
-    node.state["z"] = new_z
+    node.state["x"], node.state["z"] = new_x, new_z
 
     # --- Limites do mundo ---
-    x = node.state["x"]
-    z = node.state["z"]
-
-    if x <= -100:
-        node.state["x"] = -100
-        node.state["vel"] = 0
-    elif x >= 100:
-        node.state["x"] = 100
-        node.state["vel"] = 0
-
-    if z > 100:
-        node.state["z"] = 100
-    elif z < -100:
-        node.state["z"] = -100
+    node.state["x"] = max(-100, min(100, node.state["x"]))
+    node.state["z"] = max(-100, min(100, node.state["z"]))
 
 
 # -------------------------------
