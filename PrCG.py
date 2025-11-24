@@ -392,7 +392,8 @@ def update_roda(node, dt):
     carro = CARRO
     if carro:
         vel = carro.state.get("vel", 0.0)
-        raio = 1.2
+        # Usar o raio específico da roda (rodas maiores giram mais devagar)
+        raio = node.state.get("raio", 1.2)
         rot_speed = (vel / (2.0 * math.pi * raio)) * 360.0
         ang_atual = node.state.get("ang_roda", 0.0)
         node.state["ang_roda"] = ang_atual + rot_speed * dt
@@ -521,7 +522,7 @@ def build_scene():
     roda1 = Node("R1_Dianteira", geom=lambda: [geo_roda_dianteira(), geo_jante(flip=False)],
                 transform=tf_roda_dianteira,
                 updater=update_roda,
-                state={"ang_roda": 0.0})
+                state={"ang_roda": 0.0, "raio": 1.2})
     roda1_pos.add(roda1)
 
     roda2_pos = Node("R2_Pos",
@@ -529,7 +530,7 @@ def build_scene():
     roda2 = Node("R2_Dianteira", geom=lambda: [geo_roda_dianteira(), geo_jante(flip=True)],
                 transform=tf_roda_dianteira,
                 updater=update_roda,
-                state={"ang_roda": 0.0})
+                state={"ang_roda": 0.0, "raio": 1.2})
     roda2_pos.add(roda2)
 
     # RODAS TRASEIRAS (sem direção)
@@ -538,7 +539,7 @@ def build_scene():
     roda3 = Node("R3_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
                 transform=tf_roda,
                 updater=update_roda,
-                state={"ang_roda": 0.0})
+                state={"ang_roda": 0.0, "raio": 1.5})
     roda3_pos.add(roda3)
 
     roda4_pos = Node("R4_Pos",
@@ -546,7 +547,7 @@ def build_scene():
     roda4 = Node("R4_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
                 transform=tf_roda,
                 updater=update_roda,
-                state={"ang_roda": 0.0})
+                state={"ang_roda": 0.0, "raio": 1.5})
     roda4_pos.add(roda4)
 
     corpo = Node("Corpo", geom=geo_corpo,
