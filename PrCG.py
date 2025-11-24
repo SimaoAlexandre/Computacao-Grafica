@@ -6,6 +6,40 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 from PIL import Image
 
+def draw_textured_cube(size=1.0, texture_id=None, tex_repeat=1.0):
+    s = size / 2.0
+    t = tex_repeat
+
+    # Coordenadas UV (sempre no mesmo sentido)
+    tex = [(0, 0), (t, 0), (t, t), (0, t)]
+
+    faces = [
+        ((0, 0, 1), [(-s, -s,  s), ( s, -s,  s), ( s,  s,  s), (-s,  s,  s)]), # Frente
+        ((0, 0,-1), [( s, -s, -s), (-s, -s, -s), (-s,  s, -s), ( s,  s, -s)]), # Trás
+        ((0, 1, 0), [(-s,  s,  s), ( s,  s,  s), ( s,  s, -s), (-s,  s, -s)]), # Topo
+        ((0,-1, 0), [(-s, -s, -s), ( s, -s, -s), ( s, -s,  s), (-s, -s,  s)]), # Base
+        ((1, 0, 0), [( s, -s,  s), ( s, -s, -s), ( s,  s, -s), ( s,  s,  s)]), # Direita
+        ((-1, 0, 0), [(-s, -s, -s), (-s, -s,  s), (-s,  s,  s), (-s,  s, -s)]) # Esquerda
+    ]
+
+    if texture_id:
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, texture_id)
+
+    glColor3f(1, 1, 1)
+    glBegin(GL_QUADS)
+
+    for normal, verts in faces:
+        glNormal3f(*normal)
+        for (u, v), (x, y, z) in zip(tex, verts):
+            glTexCoord2f(u, v)
+            glVertex3f(x, y, z)
+
+    glEnd()
+
+    if texture_id:
+        glDisable(GL_TEXTURE_2D)
+
 def draw_textured_cylinder(radius, height, texture_id=None, slices=24):
     if texture_id:
         glEnable(GL_TEXTURE_2D)
@@ -61,8 +95,10 @@ def draw_corpo(color):
     glutSolidCube(2.0)
 
 def geo_corpo():
-    glColor3f(0.8, 0.1, 0.1)
-    glutSolidCube(2.0)
+    glPushMatrix()
+    glScalef(2.0, 2.0, 2.0)
+    draw_textured_cube(1.0, tex_car_paint, 1.0)
+    glPopMatrix()
 
 def geo_parede():
     glColor3f(0.8, 0.8, 0.9)
@@ -78,20 +114,16 @@ def geo_parachoque():
     glutSolidCube(1.0)
 
 def geo_parede_traseira():
-    glColor3f(0.8, 0.1, 0.1)
-    glutSolidCube(1.0)
+    draw_textured_cube(1.0, tex_car_paint, 1.0)
 
 def geo_parede_lateral():
-    glColor3f(0.8, 0.1, 0.1)
-    glutSolidCube(1.0)
+    draw_textured_cube(1.0, tex_car_paint, 1.0)
 
 def geo_porta():
-    glColor3f(0.7, 0.05, 0.05)
-    glutSolidCube(1.0)
+    draw_textured_cube(1.0, tex_car_paint, 1.0)
 
 def geo_capo():
-    glColor3f(0.8, 0.1, 0.1)
-    glutSolidCube(1.0)
+    draw_textured_cube(1.0, tex_car_paint, 1.0)
 
 def geo_matricula(): #Inspirado na TP06 do 2-cube-textured.py
     glEnable(GL_TEXTURE_2D)
@@ -715,6 +747,7 @@ PORTA_DIREITA = None
 CAPO = None
 tex_floor = None
 tex_matricula = None
+tex_car_paint = None
 tex_asphalt = None
 tex_tree_bark = None
 # Camera control (user-controllable)
@@ -726,7 +759,7 @@ camera_height = 15.0
 min_camera_height = 1.0
 
 def init_gl():
-    global tex_floor, tex_matricula, tex_asphalt, tex_tree_bark
+    global tex_floor, tex_matricula, tex_car_paint, tex_asphalt, tex_tree_bark
 
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_CULL_FACE)
@@ -772,6 +805,7 @@ def init_gl():
 
     tex_floor = load_texture("Mosaico_Chao.png", repeat=True)
     tex_matricula = load_texture("Matrícula.png", repeat=False)
+    tex_car_paint = load_texture("Pintura.jpg", repeat=True)
     tex_asphalt = load_texture("asphalt_clean.png", repeat=True)
     tex_tree_bark = load_texture("tree_bark.png", repeat=True)
 
