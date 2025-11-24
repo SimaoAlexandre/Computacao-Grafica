@@ -158,60 +158,45 @@ def geo_volante():
     glutSolidTorus(0.15, 0.8, 16, 24)
 
     # Coluna central (cilindro pequeno)
-    glPushMatrix()
     glColor3f(0.3, 0.3, 0.3)
     glutSolidSphere(0.25, 16, 16)
-    glPopMatrix()
 
-    for i in range(3):     # 3 barras radiais (raios do volante)
+    for angle in (0, 120, 240): # Divisão do círculo em 3 partes: 0°, 120°, 240°
         glPushMatrix()
-        angle = i * 120.0  # Dividir 360 graus por 3
-        glRotatef(angle, 0.0, 0.0, 1.0)
-        glTranslatef(0.4, 0.0, 0.0)  # Mover para o raio médio
-        glScalef(0.8, 0.08, 0.1)  # Barra alongada e fina
         glColor3f(0.15, 0.15, 0.15)
-        glutSolidCube(1.0)
+        glRotatef(angle, 0, 0, 1)
+        glTranslatef(0.4, 0, 0)
+        glScalef(0.8, 0.08, 0.1)
+        glutSolidCube(1)
         glPopMatrix()
 
 def geo_vidro():
     # Desabilitar escrita no depth buffer para transparência bidirecional
     glDepthMask(GL_FALSE)
-
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    glDisable(GL_CULL_FACE)  # mostrar ambas as faces
 
-    glDisable(GL_CULL_FACE)
-
-    # Manter iluminação ligada para reflexos suaves
-    # Configurar material para reflexo ligeiro
+    # Material para reflexos suaves
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (0.3, 0.3, 0.3, 1.0))
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0)
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (0.2, 0.2, 0.25, 1.0))
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (0.7, 0.8, 0.85, 0.15))
 
-    # Vidro transparente com leve tom azulado
+    # Vidro transparente
     glColor4f(0.7, 0.8, 0.9, 0.15)  # RGBA - alpha=0.15 para transparência com reflexo
 
     glBegin(GL_QUADS)
-    glNormal3f(0.0, 0.0, 1.0)  # Normal para iluminação correta
-    glVertex3f(-0.5, -0.5, 0.0)
-    glVertex3f( 0.5, -0.5, 0.0)
-    glVertex3f( 0.5,  0.5, 0.0)
-    glVertex3f(-0.5,  0.5, 0.0)
+    glNormal3f(0, 0, 1)
+    glVertex3f(-0.5, -0.5, 0)
+    glVertex3f( 0.5, -0.5, 0)
+    glVertex3f( 0.5,  0.5, 0)
+    glVertex3f(-0.5,  0.5, 0)
     glEnd()
 
-    glBegin(GL_QUADS)
-    glNormal3f(0.0, 0.0, -1.0)  # Normal oposta para a outra face
-    glVertex3f(-0.5, -0.5, 0.0)
-    glVertex3f(-0.5,  0.5, 0.0)
-    glVertex3f( 0.5,  0.5, 0.0)
-    glVertex3f( 0.5, -0.5, 0.0)
-    glEnd()
-
+    # Reativar estados originais
     glEnable(GL_CULL_FACE)
     glDisable(GL_BLEND)
-
-    # Reativar escrita no depth buffer
     glDepthMask(GL_TRUE)
 
 def geo_arvore():
