@@ -44,6 +44,7 @@ def draw_textured_cylinder(radius, height, texture_id=None, slices=24):
     if texture_id:
         glEnable(GL_TEXTURE_2D)
         glBindTexture(GL_TEXTURE_2D, texture_id)
+        glColor3f(1, 1, 1)  # Cor branca para não afetar a textura, quando nao usava isto, a textura ficava a verde
 
     quad = gluNewQuadric()
     gluQuadricTexture(quad, GL_TRUE)
@@ -53,7 +54,6 @@ def draw_textured_cylinder(radius, height, texture_id=None, slices=24):
 
     if texture_id:
         glDisable(GL_TEXTURE_2D)
-
 
 def draw_cylinder(radius, height, color):
     glColor3f(*color)
@@ -352,7 +352,6 @@ class Node:
             c.draw()
         glPopMatrix()
 
-
 # -------------------------------
 # Transformações e Atualizações
 # -------------------------------
@@ -363,7 +362,6 @@ def tf_obj(x, y, z, sx, sy, sz, ang_deg, ax, ay, az):
         glRotate(ang_deg, ax, ay, az)
         glScalef(sx, sy, sz)
     return _tf
-
 
 def tf_pos_carro(node):
     glTranslatef(node.state["x"], 0.0, node.state["z"])
@@ -763,7 +761,6 @@ def reshape(w, h):
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
-
 def display():
     glClearColor(0.5, 0.7, 1.0, 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -822,7 +819,6 @@ def display():
 
     SCENE.draw()
     glutSwapBuffers()
-
 
 # -------------------------------
 # Animação e Controlo
@@ -1006,7 +1002,6 @@ def special_keys(key, x, y):
         camera_distance = min(200.0, camera_distance + 2.0)
     glutPostRedisplay()
 
-
 # -------------------------------
 # Main
 # -------------------------------
@@ -1027,7 +1022,6 @@ def main():
     glutKeyboardUpFunc(keyboard_up)
     glutSpecialFunc(special_keys)
     glutMainLoop()
-
 
 if __name__ == "__main__":
     main()
