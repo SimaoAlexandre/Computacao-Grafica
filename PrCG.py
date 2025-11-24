@@ -6,6 +6,20 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 from PIL import Image
 
+def draw_textured_cylinder(radius, height, texture_id=None, slices=24):
+    if texture_id:
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, texture_id)
+
+    quad = gluNewQuadric()
+    gluQuadricTexture(quad, GL_TRUE)
+    gluCylinder(quad, radius, radius, height, slices, 1)
+
+    gluDeleteQuadric(quad)
+
+    if texture_id:
+        glDisable(GL_TEXTURE_2D)
+
 
 def draw_cylinder(radius, height, color):
     glColor3f(*color)
@@ -47,7 +61,8 @@ def draw_corpo(color):
     glutSolidCube(2.0)
 
 def geo_corpo():
-    draw_corpo((0.8, 0.1, 0.1))
+    glColor3f(0.8, 0.1, 0.1)
+    glutSolidCube(2.0)
 
 def geo_parede():
     glColor3f(0.8, 0.8, 0.9)
@@ -168,11 +183,10 @@ def geo_vidro():
     glDepthMask(GL_TRUE)
 
 def geo_arvore():
-    # Tronco
-    glColor3f(0.4, 0.26, 0.13)
+    # Tronco com textura
     glPushMatrix()
     glRotatef(-90, 1, 0, 0) # Cilindro cresce em Z, rodar para Y
-    glutSolidCylinder(0.8, 4.0, 12, 12)
+    draw_textured_cylinder(0.8, 4.0, tex_tree_bark, 24)
     glPopMatrix()
 
     #(Cone 1)
@@ -263,24 +277,30 @@ def draw_chao(): #adaptado da TP06 do 2-cube-textured.py
     glDisable(GL_TEXTURE_2D)
 
 def draw_estrada():
-    # Desativar texturas para desenhar geometria sólida
-    glDisable(GL_TEXTURE_2D)
+    # Ativar texturas para a estrada
+    glEnable(GL_TEXTURE_2D)
+    glBindTexture(GL_TEXTURE_2D, tex_asphalt)
     
-    # Asfalto
-    glColor3f(0.2, 0.2, 0.2) # Cinzento escuro
-    y = 0.02 # Ligeiramente acima do chão para evitar z-fighting
+    glColor3f(1.0, 1.0, 1.0)  # Branco para não alterar a textura
+    y = 0.02  # Ligeiramente acima do chão para evitar z-fighting
     
     # Dimensões da estrada
     x_min, x_max = -29.5, 100.0
     z_width = 10.0
     
+    # Repetição da textura ao longo da estrada
+    tex_repeat_x = (x_max - x_min) / 10.0  # Repetir a cada 10 unidades
+    tex_repeat_z = (z_width * 2) / 10.0
+    
     glBegin(GL_QUADS)
     glNormal3f(0, 1, 0)
-    glVertex3f(x_min, y, z_width)
-    glVertex3f(x_max, y, z_width)
-    glVertex3f(x_max, y, -z_width)
-    glVertex3f(x_min, y, -z_width)
+    glTexCoord2f(0, 0); glVertex3f(x_min, y, z_width)
+    glTexCoord2f(tex_repeat_x, 0); glVertex3f(x_max, y, z_width)
+    glTexCoord2f(tex_repeat_x, tex_repeat_z); glVertex3f(x_max, y, -z_width)
+    glTexCoord2f(0, tex_repeat_z); glVertex3f(x_min, y, -z_width)
     glEnd()
+    
+    glDisable(GL_TEXTURE_2D)
 
 # -------------------------------
 # Classe Node
@@ -695,6 +715,8 @@ PORTA_DIREITA = None
 CAPO = None
 tex_floor = None
 tex_matricula = None
+tex_asphalt = None
+tex_tree_bark = None
 # Camera control (user-controllable)
 camera_mode = 0  # 0 = livre, 1 = 3ª pessoa, 2 = 1ª pessoa
 camera_distance = 35.0
@@ -704,7 +726,7 @@ camera_height = 15.0
 min_camera_height = 1.0
 
 def init_gl():
-    global tex_floor, tex_matricula
+    global tex_floor, tex_matricula, tex_asphalt, tex_tree_bark
 
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_CULL_FACE)
@@ -750,6 +772,8 @@ def init_gl():
 
     tex_floor = load_texture("Mosaico_Chao.png", repeat=True)
     tex_matricula = load_texture("Matrícula.png", repeat=False)
+    tex_asphalt = load_texture("asphalt_clean.png", repeat=True)
+    tex_tree_bark = load_texture("tree_bark.png", repeat=True)
 
 def reshape(w, h):
     global WIN_W, WIN_H
