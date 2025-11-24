@@ -12,7 +12,7 @@ def draw_cylinder(radius, height, color):
     glutSolidCylinder(radius, height, 24, 8)
 
 def geo_roda_traseira():
-    draw_cylinder(1.2, 0.6, (0.05, 0.05, 0.05))
+    draw_cylinder(1.5, 0.6, (0.05, 0.05, 0.05))
 
 def geo_roda_dianteira():
     draw_cylinder(1.2, 0.5, (0.05, 0.05, 0.05))
@@ -534,7 +534,7 @@ def build_scene():
 
     # RODAS TRASEIRAS (sem direção)
     roda3_pos = Node("R3_Pos",
-                    transform=tf_obj(5.0, 1.2, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+                    transform=tf_obj(5.0, 1.5, 6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     roda3 = Node("R3_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=True)],
                 transform=tf_roda,
                 updater=update_roda,
@@ -542,7 +542,7 @@ def build_scene():
     roda3_pos.add(roda3)
 
     roda4_pos = Node("R4_Pos",
-                    transform=tf_obj(5.0, 1.2, -6.6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+                    transform=tf_obj(5.0, 1.5, -6.6, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
     roda4 = Node("R4_Traseira", geom=lambda: [geo_roda_traseira(), geo_jante(flip=False)],
                 transform=tf_roda,
                 updater=update_roda,
