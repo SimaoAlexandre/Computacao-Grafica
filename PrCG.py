@@ -94,6 +94,8 @@ def draw_corpo(color):
     glColor3f(*color)
     glutSolidCube(2.0)
 
+
+
 def geo_corpo():
     glPushMatrix()
     glScalef(2.0, 2.0, 2.0)
@@ -169,6 +171,30 @@ def geo_volante():
         glScalef(0.8, 0.08, 0.1)
         glutSolidCube(1)
         glPopMatrix()
+
+def geo_assento():
+    # Cor uniforme para todo o assento
+    glColor3f(0.2, 0.2, 0.2)  # Cinza escuro
+    
+    # Base do assento
+    glPushMatrix()
+    glScalef(1.5, 0.3, 1.5)
+    glutSolidCube(1.0)
+    glPopMatrix()
+    
+    # Encosto
+    glPushMatrix()
+    glTranslatef(0.0, 0.8, -0.6)
+    glScalef(1.5, 1.6, 0.3)
+    glutSolidCube(1.0)
+    glPopMatrix()
+    
+    # Apoio de cabeça
+    glPushMatrix()
+    glTranslatef(0.0, 1.7, -0.6)
+    glScalef(1.0, 0.5, 0.3)
+    glutSolidCube(1.0)
+    glPopMatrix()
 
 def geo_vidro():
     # Desabilitar escrita no depth buffer para transparência bidirecional
@@ -602,6 +628,12 @@ def build_scene():
     vidro_frente = Node("VidroFrente", geom=geo_vidro,
                        transform=tf_obj(-3.0, 5.5, 0.0, 11.0, 2.0, 4.0, 90.0, 0.0, 1.0, 0.0))
 
+    assento_condutor = Node("AssentoCondutor", geom=geo_assento,
+                           transform=tf_obj(1.5, 3, 3.0, 2.0, 1.0, 2.0, 270.0, 0.0, 1.0, 0.0))
+    
+    assento_passageiro = Node("AssentoPassageiro", geom=geo_assento,
+                             transform=tf_obj(1.5, 3.0, -3.0, 2.0, 1.0, 2.0, 270.0, 0.0, 1.0, 0.0))
+
     global PORTA_ESQUERDA, PORTA_DIREITA, CAPO
     PORTA_ESQUERDA = porta_esquerda
     PORTA_DIREITA = porta_direita
@@ -651,7 +683,9 @@ def build_scene():
             capo,
             matricula_frente,
             matricula_tras,
-            vidro_frente  # Vidro por último para renderização correta de transparência
+            assento_condutor,
+            assento_passageiro,
+            vidro_frente 
         ),
         chao,
         garagem.add(
