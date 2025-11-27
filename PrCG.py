@@ -175,20 +175,20 @@ def geo_volante():
 def geo_assento():
     # Cor uniforme para todo o assento
     glColor3f(0.2, 0.2, 0.2)  # Cinza escuro
-    
+
     # Base do assento
     glPushMatrix()
     glScalef(1.5, 0.3, 1.5)
     glutSolidCube(1.0)
     glPopMatrix()
-    
+
     # Encosto
     glPushMatrix()
     glTranslatef(0.0, 0.8, -0.6)
     glScalef(1.5, 1.6, 0.3)
     glutSolidCube(1.0)
     glPopMatrix()
-    
+
     # Apoio de cabeça
     glPushMatrix()
     glTranslatef(0.0, 1.7, -0.6)
@@ -266,14 +266,14 @@ def geo_poste():
     # Lampada (globo)
     glPushMatrix()
     glTranslatef(3.0, 9.3, 0.0)
-    
+
     # Material emissivo para parecer acesa
     glPushAttrib(GL_LIGHTING_BIT)
     glMaterialfv(GL_FRONT, GL_EMISSION, (1.0, 1.0, 0.8, 1.0))
     glColor3f(1.0, 1.0, 0.8)
     glutSolidSphere(0.4, 16, 16)
     glPopAttrib()
-    
+
     glPopMatrix()
 
 def load_texture(path, repeat=True): #TP06 do 2-cube-textured.py
@@ -323,18 +323,18 @@ def draw_estrada():
     # Ativar texturas para a estrada
     glEnable(GL_TEXTURE_2D)
     glBindTexture(GL_TEXTURE_2D, tex_asphalt)
-    
+
     glColor3f(1.0, 1.0, 1.0)  # Branco para não alterar a textura
     y = 0.02  # Ligeiramente acima do chão para evitar z-fighting
-    
+
     # Dimensões da estrada
     x_min, x_max = -29.5, 100.0
     z_width = 10.0
-    
+
     # Repetição da textura ao longo da estrada
     tex_repeat_x = (x_max - x_min) / 10.0  # Repetir a cada 10 unidades
     tex_repeat_z = (z_width * 2) / 10.0
-    
+
     glBegin(GL_QUADS)
     glNormal3f(0, 1, 0)
     glTexCoord2f(0, 0); glVertex3f(x_min, y, z_width)
@@ -342,7 +342,7 @@ def draw_estrada():
     glTexCoord2f(tex_repeat_x, tex_repeat_z); glVertex3f(x_max, y, -z_width)
     glTexCoord2f(0, tex_repeat_z); glVertex3f(x_min, y, -z_width)
     glEnd()
-    
+
     glDisable(GL_TEXTURE_2D)
 
 # -------------------------------
@@ -630,7 +630,7 @@ def build_scene():
 
     assento_condutor = Node("AssentoCondutor", geom=geo_assento,
                            transform=tf_obj(1.5, 3, 3.0, 2.0, 1.0, 2.0, 270.0, 0.0, 1.0, 0.0))
-    
+
     assento_passageiro = Node("AssentoPassageiro", geom=geo_assento,
                              transform=tf_obj(1.5, 3.0, -3.0, 2.0, 1.0, 2.0, 270.0, 0.0, 1.0, 0.0))
 
@@ -685,7 +685,7 @@ def build_scene():
             matricula_tras,
             assento_condutor,
             assento_passageiro,
-            vidro_frente 
+            vidro_frente
         ),
         chao,
         garagem.add(
@@ -731,6 +731,9 @@ camera_angle_h = 45.0
 camera_angle_v = 20.0
 camera_height = 15.0
 min_camera_height = 1.0
+
+# Sistema de iluminação dia/noite
+night_mode = False
 
 def init_gl():
     global tex_floor, tex_matricula, tex_car_paint, tex_asphalt, tex_tree_bark
@@ -783,6 +786,31 @@ def init_gl():
     tex_asphalt = load_texture("asphalt_clean.png", repeat=True)
     tex_tree_bark = load_texture("tree_bark.png", repeat=True)
 
+def update_lighting():
+    """Atualiza a iluminação baseado no modo dia/noite"""
+    global night_mode
+
+    if night_mode:
+        # Modo Noite - Desligar luz do sol (LIGHT0) e luz da garagem (LIGHT1)
+        glDisable(GL_LIGHT0)
+        glDisable(GL_LIGHT1)
+
+        # Manter apenas os postes (LIGHT2 e LIGHT3) ligados
+        glEnable(GL_LIGHT2)
+        glEnable(GL_LIGHT3)
+
+        # Ambiente muito escuro (quase preto)
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (0.05, 0.05, 0.1, 1.0))
+    else:
+        # Modo Dia - Ligar todas as luzes
+        glEnable(GL_LIGHT0)
+        glEnable(GL_LIGHT1)
+        glEnable(GL_LIGHT2)
+        glEnable(GL_LIGHT3)
+
+        # Ambiente normal
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (0.2, 0.2, 0.2, 1.0))
+
 def reshape(w, h):
     global WIN_W, WIN_H
     WIN_W, WIN_H = max(1, w), max(1, h)
@@ -796,9 +824,17 @@ def reshape(w, h):
     glLoadIdentity()
 
 def display():
-    glClearColor(0.5, 0.7, 1.0, 1.0)
+    # Cor do céu baseado no modo dia/noite
+    if night_mode:
+        glClearColor(0.05, 0.05, 0.15, 1.0)  # Céu noturno (azul muito escuro)
+    else:
+        glClearColor(0.5, 0.7, 1.0, 1.0)  # Céu diurno (azul claro)
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
+
+    # Atualizar iluminação
+    update_lighting()
 
     # Estado do carro
     car_x = CARRO.state.get("x", 0.0)
@@ -935,6 +971,13 @@ def keyboard(key, x, y):
         camera_mode = (camera_mode + 1) % 3
         mode_names = ["Câmara Livre", "3ª Pessoa", "1ª Pessoa"]
         print(f"Modo de câmara: {mode_names[camera_mode]}")
+        glutPostRedisplay()
+
+    elif key == b'l' or key == b'L':  # Alternar modo dia/noite
+        global night_mode
+        night_mode = not night_mode
+        mode_name = "Noite (Postes Ligados)" if night_mode else "Dia (Todas as Luzes)"
+        print(f"Modo de iluminação: {mode_name}")
         glutPostRedisplay()
 
 def keyboard_up(key, x, y):

@@ -24,6 +24,11 @@ O carro agora funciona com **física de direção realista** (direção Ackerman
 - `Q` / `q`: Abrir / fechar a porta **esquerda** do carro.
 - `E` / `e`: Abrir / fechar a porta **direita** do carro.
 
+## Modo Dia/Noite:
+- `L` / `l`: Alternar entre **modo dia** e **modo noite**.
+  - **Modo Dia**: Todas as luzes ativas (sol + garagem + postes). Céu azul claro.
+  - **Modo Noite**: Apenas os postes iluminados. Céu escuro noturno.
+
 ## Outros Controlos:
 - `C` / `c`: Alternar modo de câmara.
 - `Esc`: Sair da aplicação.
