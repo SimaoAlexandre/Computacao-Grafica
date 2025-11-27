@@ -154,6 +154,64 @@ def geo_matricula(): #Inspirado na TP06 do 2-cube-textured.py
 
     glDisable(GL_TEXTURE_2D)
 
+def geo_farol():
+    """Desenha um farol do carro (cilindro + lente)"""
+    global night_mode
+
+    # Corpo do farol (cilindro cinza escuro)
+    glColor3f(0.2, 0.2, 0.2)
+    glPushMatrix()
+    glRotatef(-90, 0, 1, 0)
+    glutSolidCylinder(0.7, 0.5, 16, 16)
+    glPopMatrix()
+
+    # Lente do farol (esfera brilhante)
+    glPushMatrix()
+    glTranslatef(-0.5, 0, 0)
+
+    if night_mode:
+        # Modo noite: farol aceso (amarelo brilhante com emissão)
+        glPushAttrib(GL_LIGHTING_BIT)
+        glMaterialfv(GL_FRONT, GL_EMISSION, (1.0, 1.0, 0.7, 1.0))
+        glColor3f(1.0, 1.0, 0.7)
+        glutSolidSphere(0.6, 16, 16)
+        glPopAttrib()
+    else:
+        # Modo dia: farol apagado (vidro transparente)
+        glColor3f(0.8, 0.8, 0.9)
+        glutSolidSphere(0.6, 16, 16)
+
+    glPopMatrix()
+
+def geo_farol_traseiro():
+    """Desenha um farol traseiro vermelho"""
+    global night_mode
+
+    # Corpo do farol traseiro (cilindro cinza escuro)
+    glColor3f(0.2, 0.2, 0.2)
+    glPushMatrix()
+    glRotatef(90, 0, 1, 0)
+    glutSolidCylinder(0.5, 0.4, 16, 16)
+    glPopMatrix()
+
+    # Lente vermelha
+    glPushMatrix()
+    glTranslatef(0.4, 0, 0)
+
+    if night_mode:
+        # Modo noite: farol traseiro aceso (vermelho brilhante com emissão)
+        glPushAttrib(GL_LIGHTING_BIT)
+        glMaterialfv(GL_FRONT, GL_EMISSION, (0.8, 0.0, 0.0, 1.0))
+        glColor3f(1.0, 0.0, 0.0)
+        glutSolidSphere(0.45, 16, 16)
+        glPopAttrib()
+    else:
+        # Modo dia: farol apagado (vermelho escuro)
+        glColor3f(0.5, 0.0, 0.0)
+        glutSolidSphere(0.45, 16, 16)
+
+    glPopMatrix()
+
 def geo_volante():
     # Aro do volante (torus)
     glColor3f(0.1, 0.1, 0.1)  # Preto
@@ -625,6 +683,20 @@ def build_scene():
     matricula_frente = Node("MatriculaFrente", geom=geo_matricula,
                          transform=tf_obj(-6.3, 3.0, 0.0, 1.0, 1.0, 1.0, -90.0, 0.0, 1.0, 0.0))
 
+    # Faróis - posicionados nas laterais
+    farol_esquerdo = Node("FarolEsquerdo", geom=geo_farol,
+                         transform=tf_obj(-6.0, 2.5, 4.8, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+
+    farol_direito = Node("FarolDireito", geom=geo_farol,
+                        transform=tf_obj(-6.0, 2.5, -4.8, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+
+    # Faróis traseiros vermelhos
+    farol_traseiro_esquerdo = Node("FarolTraseiroEsquerdo", geom=geo_farol_traseiro,
+                                   transform=tf_obj(6.0, 2.5, 4.8, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+
+    farol_traseiro_direito = Node("FarolTraseiroDireito", geom=geo_farol_traseiro,
+                                  transform=tf_obj(6.0, 2.5, -4.8, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0))
+
     vidro_frente = Node("VidroFrente", geom=geo_vidro,
                        transform=tf_obj(-3.0, 5.5, 0.0, 11.0, 2.0, 4.0, 90.0, 0.0, 1.0, 0.0))
 
@@ -683,6 +755,10 @@ def build_scene():
             capo,
             matricula_frente,
             matricula_tras,
+            farol_esquerdo,
+            farol_direito,
+            farol_traseiro_esquerdo,
+            farol_traseiro_direito,
             assento_condutor,
             assento_passageiro,
             vidro_frente
@@ -775,6 +851,29 @@ def init_gl():
     glLightf(GL_LIGHT3, GL_LINEAR_ATTENUATION, 0.05)
     glLightf(GL_LIGHT3, GL_QUADRATIC_ATTENUATION, 0.01)
 
+    # LIGHT4 e LIGHT5: Faróis do carro (configurados inicialmente desligados)
+    glLightfv(GL_LIGHT4, GL_DIFFUSE,  (1.0, 1.0, 0.8, 1.0))
+    glLightfv(GL_LIGHT4, GL_SPECULAR, (1.0, 1.0, 0.9, 1.0))
+    glLightfv(GL_LIGHT4, GL_AMBIENT,  (0.1, 0.1, 0.05, 1.0))
+    glLightf(GL_LIGHT4, GL_CONSTANT_ATTENUATION, 0.3)
+    glLightf(GL_LIGHT4, GL_LINEAR_ATTENUATION, 0.08)
+    glLightf(GL_LIGHT4, GL_QUADRATIC_ATTENUATION, 0.015)
+    # Spotlight (cone de luz)
+    glLightfv(GL_LIGHT4, GL_SPOT_DIRECTION, (-1.0, -0.1, 0.0))  # Aponta para frente
+    glLightf(GL_LIGHT4, GL_SPOT_CUTOFF, 40.0)  # Ângulo do cone
+    glLightf(GL_LIGHT4, GL_SPOT_EXPONENT, 15.0)  # Concentração
+
+    glLightfv(GL_LIGHT5, GL_DIFFUSE,  (1.0, 1.0, 0.8, 1.0))
+    glLightfv(GL_LIGHT5, GL_SPECULAR, (1.0, 1.0, 0.9, 1.0))
+    glLightfv(GL_LIGHT5, GL_AMBIENT,  (0.1, 0.1, 0.05, 1.0))
+    glLightf(GL_LIGHT5, GL_CONSTANT_ATTENUATION, 0.3)
+    glLightf(GL_LIGHT5, GL_LINEAR_ATTENUATION, 0.08)
+    glLightf(GL_LIGHT5, GL_QUADRATIC_ATTENUATION, 0.015)
+    # Spotlight (cone de luz)
+    glLightfv(GL_LIGHT5, GL_SPOT_DIRECTION, (-1.0, -0.1, 0.0))  # Aponta para frente
+    glLightf(GL_LIGHT5, GL_SPOT_CUTOFF, 40.0)  # Ângulo do cone
+    glLightf(GL_LIGHT5, GL_SPOT_EXPONENT, 15.0)  # Concentração
+
     glEnable(GL_COLOR_MATERIAL)
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
 
@@ -799,14 +898,22 @@ def update_lighting():
         glEnable(GL_LIGHT2)
         glEnable(GL_LIGHT3)
 
+        # Ligar faróis do carro (LIGHT4 e LIGHT5)
+        glEnable(GL_LIGHT4)
+        glEnable(GL_LIGHT5)
+
         # Ambiente muito escuro (quase preto)
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (0.05, 0.05, 0.1, 1.0))
     else:
-        # Modo Dia - Ligar todas as luzes
+        # Modo Dia - Ligar todas as luzes exceto os faróis
         glEnable(GL_LIGHT0)
         glEnable(GL_LIGHT1)
         glEnable(GL_LIGHT2)
         glEnable(GL_LIGHT3)
+
+        # Desligar faróis do carro
+        glDisable(GL_LIGHT4)
+        glDisable(GL_LIGHT5)
 
         # Ambiente normal
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (0.2, 0.2, 0.2, 1.0))
@@ -847,6 +954,25 @@ def display():
     fwd_z =  math.sin(car_angle)
     right_x = -math.sin(car_angle)
     right_z = -math.cos(car_angle)
+
+    # Atualizar posição dos faróis do carro (LIGHT4 e LIGHT5)
+    if night_mode and CARRO:
+        # Posição dos faróis (frente do carro, laterais moderadas)
+        farol_offset_frente = 6.0  # Distância da frente do carro
+        farol_offset_lateral = 4.8  # Distância lateral
+        farol_height = 2.5
+
+        # Farol esquerdo (LIGHT4)
+        farol_esq_x = car_x - fwd_x * farol_offset_frente - right_x * farol_offset_lateral
+        farol_esq_z = car_z - fwd_z * farol_offset_frente - right_z * farol_offset_lateral
+        glLightfv(GL_LIGHT4, GL_POSITION, (farol_esq_x, farol_height, farol_esq_z, 1.0))
+        glLightfv(GL_LIGHT4, GL_SPOT_DIRECTION, (fwd_x, -0.1, fwd_z))
+
+        # Farol direito (LIGHT5)
+        farol_dir_x = car_x - fwd_x * farol_offset_frente + right_x * farol_offset_lateral
+        farol_dir_z = car_z - fwd_z * farol_offset_frente + right_z * farol_offset_lateral
+        glLightfv(GL_LIGHT5, GL_POSITION, (farol_dir_x, farol_height, farol_dir_z, 1.0))
+        glLightfv(GL_LIGHT5, GL_SPOT_DIRECTION, (fwd_x, -0.1, fwd_z))
 
     if camera_mode == 0: # Camera livre
         ang_v = math.radians(camera_angle_v)
@@ -976,7 +1102,7 @@ def keyboard(key, x, y):
     elif key == b'l' or key == b'L':  # Alternar modo dia/noite
         global night_mode
         night_mode = not night_mode
-        mode_name = "Noite (Postes Ligados)" if night_mode else "Dia (Todas as Luzes)"
+        mode_name = "Noite (Postes e Faróis Ligados)" if night_mode else "Dia (Todas as Luzes)"
         print(f"Modo de iluminação: {mode_name}")
         glutPostRedisplay()
 
