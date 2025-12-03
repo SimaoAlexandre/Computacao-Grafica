@@ -1,4 +1,4 @@
-# Controles de Interação
+# Controlo de Interação
 
 Interaja com a cena (`PrCG.py`) usando as teclas abaixo. Pressione as teclas na janela da aplicação.
 
